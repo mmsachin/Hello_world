@@ -1,0 +1,1148 @@
+app > models >database_models.py
+
+from datetime import datetime
+from enum import Enum
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, DateTime, Enum as SQLEnum
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+
+Base = declarative_base()
+
+class AOPState(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    EOL = "eol"
+
+class AOP(Base):
+    __tablename__ = 'aop'
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    total_amount = Column(Float, nullable=False, default=0.0)
+    state = Column(SQLEnum(AOPState), default=AOPState.DRAFT)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+    
+    details = relationship("AOPDetail", back_populates="aop")
+    budgets = relationship("Budget", back_populates="aop")
+
+class AOPDetail(Base):
+    __tablename__ = 'aop_detail'
+    
+    id = Column(Integer, primary_key=True)
+    aop_id = Column(Integer, ForeignKey('aop.id'))
+    cost_center_id = Column(Integer, ForeignKey('cost_center.id'))
+    amount = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    aop = relationship("AOP", back_populates="details")
+    cost_center = relationship("CostCenter")
+
+class CostCenter(Base):
+    __tablename__ = 'cost_center'
+    
+    id = Column(Integer, primary_key=True)
+    code = Column(String(50), unique=True, nullable=False)
+    name = Column(String(100), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Employee(Base):
+    __tablename__ = 'employee'
+    
+    id = Column(Integer, primary_key=True)
+    ldap = Column(String(50), unique=True, nullable=False)
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    email = Column(String(100), nullable=False)
+    level = Column(Integer, nullable=False)
+    cost_center_id = Column(Integer, ForeignKey('cost_center.id'))
+    manager_id = Column(Integer, ForeignKey('employee.id'))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    cost_center = relationship("CostCenter")
+    manager = relationship("Employee", remote_side=[id])
+    reports = relationship("Employee", backref="manager_ref")
+
+class Budget(Base):
+    __tablename__ = 'budget'
+    
+    id = Column(Integer, primary_key=True)
+    budget_id = Column(String(50), unique=True, nullable=False)
+    aop_id = Column(Integer, ForeignKey('aop.id'))
+    employee_id = Column(Integer, ForeignKey('employee.id'))
+    project = Column(String(100), nullable=False)
+    description = Column(String(255))
+    amount = Column(Float, nullable=False)
+    pr_amount = Column(Float, default=0.0)
+    po_amount = Column(Float, default=0.0)
+    receipt_amount = Column(Float, default=0.0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    aop = relationship("AOP", back_populates="budgets")
+    employee = relationship("Employee")
+    purchase_requests = relationship("PurchaseRequest", back_populates="budget")
+    purchase_orders = relationship("PurchaseOrder", back_populates="budget")
+
+class PurchaseRequest(Base):
+    __tablename__ = 'purchase_request'
+    
+    id = Column(Integer, primary_key=True)
+    pr_reference = Column(String(50), unique=True, nullable=False)
+    budget_id = Column(String(50), ForeignKey('budget.budget_id'))
+    requestor_ldap = Column(String(50), ForeignKey('employee.ldap'))
+    amount = Column(Float, nullable=False)
+    request_date = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    budget = relationship("Budget", back_populates="purchase_requests")
+    requestor = relationship("Employee", foreign_keys=[requestor_ldap])
+
+class PurchaseOrder(Base):
+    __tablename__ = 'purchase_order'
+    
+    id = Column(Integer, primary_key=True)
+    po_number = Column(String(50), nullable=False)
+    po_line_number = Column(Integer, nullable=False)
+    budget_id = Column(String(50), ForeignKey('budget.budget_id'))
+    requestor_ldap = Column(String(50), ForeignKey('employee.ldap'))
+    purchase_item = Column(String(255), nullable=False)
+    amount = Column(Float, nullable=False)
+    order_date = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    budget = relationship("Budget", back_populates="purchase_orders")
+    requestor = relationship("Employee", foreign_keys=[requestor_ldap])
+    receipts = relationship("Receipt", back_populates="purchase_order")
+
+class Receipt(Base):
+    __tablename__ = 'receipt'
+    
+    id = Column(Integer, primary_key=True)
+    po_number = Column(String(50), nullable=False)
+    po_line_number = Column(Integer, nullable=False)
+    purchase_item = Column(String(255), nullable=False)
+    receipt_date = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    purchase_order = relationship("PurchaseOrder", 
+                                foreign_keys=[po_number, po_line_number],
+                                back_populates="receipts")
+
+-----------------
+
+app > services>aop_service.py
+
+from typing import List, Optional
+from datetime import datetime
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from .models import AOP, AOPDetail, Budget, AOPState
+
+class AOPService:
+    def __init__(self, db_session: Session):
+        self.db = db_session
+
+    def create_aop(self, name: str, total_amount: float) -> AOP:
+        """Create a new AOP in draft state"""
+        aop = AOP(
+            name=name,
+            total_amount=total_amount,
+            state=AOPState.DRAFT
+        )
+        self.db.add(aop)
+        self.db.commit()
+        return aop
+
+    def update_aop_state(self, aop_id: int, new_state: AOPState) -> AOP:
+        """Update AOP state with validations"""
+        aop = self.db.query(AOP).filter(AOP.id == aop_id).first()
+        if not aop:
+            raise ValueError("AOP not found")
+
+        if new_state == AOPState.ACTIVE:
+            # Check if any other AOP is active
+            active_aop = self.db.query(AOP).filter(
+                AOP.state == AOPState.ACTIVE,
+                AOP.id != aop_id
+            ).first()
+            if active_aop:
+                raise ValueError("Another AOP is already active")
+            
+            # Validate total budget amounts
+            total_budget = self.db.query(func.sum(Budget.amount)).filter(
+                Budget.aop_id == aop_id,
+                Budget.is_active == True
+            ).scalar() or 0.0
+            
+            if total_budget > aop.total_amount:
+                raise ValueError("Total budgets exceed AOP amount")
+
+        aop.state = new_state
+        self.db.commit()
+        return aop
+
+    def add_aop_detail(self, aop_id: int, cost_center_id: int, amount: float) -> AOPDetail:
+        """Add detail to AOP and update total amount"""
+        aop = self.db.query(AOP).filter(AOP.id == aop_id).first()
+        if not aop:
+            raise ValueError("AOP not found")
+        
+        if aop.state == AOPState.ACTIVE:
+            raise ValueError("Cannot modify active AOP directly")
+        
+        detail = AOPDetail(
+            aop_id=aop_id,
+            cost_center_id=cost_center_id,
+            amount=amount
+        )
+        self.db.add(detail)
+        
+        # Update AOP total
+        aop.total_amount = self.db.query(func.sum(AOPDetail.amount)).filter(
+            AOPDetail.aop_id == aop_id
+        ).scalar() or 0.0
+        
+        self.db.commit()
+        return detail
+
+    def reconcile_aop(self, aop_id: int) -> dict:
+        """Reconcile AOP with active budgets"""
+        aop = self.db.query(AOP).filter(AOP.id == aop_id).first()
+        if not aop:
+            raise ValueError("AOP not found")
+        
+        total_budget = self.db.query(func.sum(Budget.amount)).filter(
+            Budget.aop_id == aop_id,
+            Budget.is_active == True
+        ).scalar() or 0.0
+        
+        return {
+            "aop_amount": aop.total_amount,
+            "total_budget": total_budget,
+            "difference": aop.total_amount - total_budget,
+            "is_compliant": total_budget <= aop.total_amount
+        }
+
+-----
+app>services>chat_handler.py
+
+from typing import Dict, Any, Optional, List
+import re
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from ..models.database_models import Employee, Budget, AOP, CostCenter
+from .aop_service import AOPService
+from .employee_service import EmployeeService
+from .budget_service import BudgetService
+
+class ChatHandler:
+    def __init__(self, db_session: Session):
+        self.db = db_session
+        self.aop_service = AOPService(db_session)
+        self.employee_service = EmployeeService(db_session)
+        self.budget_service = BudgetService(db_session)
+        self.authenticated = False
+        self.current_user: Optional[Employee] = None
+
+    def process_message(self, message: str) -> str:
+        """Process incoming chat messages"""
+        if not self.authenticated:
+            if message.strip() == "IKnowYou241202":
+                self.authenticated = True
+                return "Authentication successful. How can I help you today?"
+            return "Please authenticate with the correct code to continue."
+
+        # Set current user if not set
+        if not self.current_user and "as" in message.lower():
+            ldap_match = re.search(r"as\s+(\w+)", message.lower())
+            if ldap_match:
+                try:
+                    self.current_user = self.db.query(Employee).filter(
+                        Employee.ldap == ldap_match.group(1),
+                        Employee.is_active == True
+                    ).first()
+                    if self.current_user:
+                        return f"Now operating as {self.current_user.first_name} {self.current_user.last_name}"
+                except Exception as e:
+                    return f"Error setting user: {str(e)}"
+
+        # Command parsing
+        message = message.lower().strip()
+        
+        try:
+            if message.startswith("add user"):
+                return self._handle_add_user(message)
+            elif message.startswith("remove user"):
+                return self._handle_remove_user(message)
+            elif message.startswith("show me my organization"):
+                return self._handle_show_organization()
+            elif message.startswith("show me my budget"):
+                return self._handle_show_budget()
+            elif message.startswith("chart budgets"):
+                return self._handle_chart_budgets(message)
+            elif message.startswith("add aop"):
+                return self._handle_add_aop(message)
+            elif message.startswith("add budget"):
+                return self._handle_add_budget(message)
+            elif message.startswith("update budget state"):
+                return self._handle_update_budget_state(message)
+            elif message.startswith("reconcile aop"):
+                return self._handle_reconcile_aop(message)
+            else:
+                return self._handle_external_query(message)
+        except Exception as e:
+            return f"Error processing request: {str(e)}"
+
+    def _handle_add_user(self, message: str) -> str:
+        """Handle add user command with progressive prompting"""
+        # Extract provided information
+        ldap_match = re.search(r"ldap\s+(\w+)", message)
+        fname_match = re.search(r"first name\s+(\w+)", message)
+        lname_match = re.search(r"last name\s+(\w+)", message)
+        email_match = re.search(r"email\s+(\S+@\S+)", message)
+        level_match = re.search(r"level\s+(\d+)", message)
+        cc_match = re.search(r"cost center\s+(\w+)", message)
+        manager_match = re.search(r"manager\s+(\w+)", message)
+
+        # Build response based on missing information
+        missing_info = []
+        user_info = {}
+
+        if ldap_match:
+            user_info['ldap'] = ldap_match.group(1)
+        else:
+            missing_info.append("LDAP username")
+
+        if fname_match:
+            user_info['first_name'] = fname_match.group(1)
+        else:
+            missing_info.append("first name")
+
+        if lname_match:
+            user_info['last_name'] = lname_match.group(1)
+        else:
+            missing_info.append("last name")
+
+        if email_match:
+            user_info['email'] = email_match.group(1)
+        else:
+            missing_info.append("email")
+
+        if level_match:
+            level = int(level_match.group(1))
+            if 1 <= level <= 12:
+                user_info['level'] = level
+            else:
+                return "Level must be between 1 and 12"
+        else:
+            missing_info.append("level (1-12)")
+
+        if cc_match:
+            cost_center = self.db.query(CostCenter).filter_by(code=cc_match.group(1)).first()
+            if not cost_center:
+                return f"Cost center {cc_match.group(1)} not found"
+            user_info['cost_center_code'] = cc_match.group(1)
+        else:
+            missing_info.append("cost center code")
+
+        if manager_match:
+            user_info['manager_ldap'] = manager_match.group(1)
+
+        if missing_info:
+            return f"Please provide the following information: {', '.join(missing_info)}"
+
+        try:
+            self.employee_service.create_employee(**user_info)
+            return f"User {user_info['ldap']} created successfully"
+        except Exception as e:
+            return f"Error creating user: {str(e)}"
+
+    def _handle_show_organization(self) -> str:
+        """Handle show organization command"""
+        if not self.current_user:
+            return "Please specify your LDAP username first (use 'as <ldap>')"
+
+        try:
+            org_structure = self.employee_service.get_organization_hierarchy(self.current_user.ldap)
+            
+            def format_org_tree(node: Dict, level: int = 0) -> List[str]:
+                result = ["  " * level + f"- {node['name']} ({node['ldap']})"]
+                for report in node.get('reports', []):
+                    result.extend(format_org_tree(report, level + 1))
+                return result
+            
+            if not org_structure:
+                return "No organization structure found"
+                
+            return "Organization Structure:\n" + "\n".join(format_org_tree(org_structure))
+        except Exception as e:
+            return f"Error retrieving organization: {str(e)}"
+
+    def _handle_show_budget(self) -> str:
+        """Handle show budget command"""
+        if not self.current_user:
+            return "Please specify your LDAP username first (use 'as <ldap>')"
+
+        try:
+            budget_summary = self.budget_service.get_organization_budget_summary(self.current_user.ldap)
+            
+            if not budget_summary:
+                return "No budget information found"
+                
+            result = ["Budget Summary:"]
+            result.append(f"\nTotal Budget: ${budget_summary['total']:,.2f}")
+            result.append("\nBreakdown by Employee:")
+            
+            for emp in budget_summary['by_employee']:
+                result.append(f"- {emp['name']}: ${emp['amount']:,.2f}")
+                
+            return "\n".join(result)
+        except Exception as e:
+            return f"Error retrieving budget: {str(e)}"
+
+    def _handle_chart_budgets(self, message: str) -> Dict:
+        """Handle budget charting command"""
+        aop_match = re.search(r"for aop\s+(\d+)", message)
+        if not aop_match:
+            return "Please specify an AOP ID (e.g., 'chart budgets for aop 1')"
+            
+        try:
+            aop_id = int(aop_match.group(1))
+            chart_data = self.budget_service.get_budget_chart_data(aop_id)
+            
+            return {
+                "type": "chart",
+                "chartType": "bar",
+                "data": chart_data
+            }
+        except Exception as e:
+            return f"Error generating chart: {str(e)}"
+
+    def _handle_remove_user(self, message: str) -> str:
+        """Handle remove user command"""
+        ldap_match = re.search(r"remove user\s+(\w+)", message)
+        if not ldap_match:
+            return "Please specify the LDAP username to remove"
+            
+        try:
+            ldap = ldap_match.group(1)
+            self.employee_service.remove_employee(ldap)
+            return f"User {ldap} has been removed"
+        except ValueError as e:
+            return str(e)
+
+    def _handle_add_aop(self, message: str) -> str:
+        """Handle add AOP command"""
+        name_match = re.search(r"name\s+\"([^\"]+)\"", message)
+        amount_match = re.search(r"amount\s+(\d+(?:\.\d{1,2})?)", message)
+        
+        if not name_match or not amount_match:
+            return "Please provide AOP name and amount (e.g., 'add aop name \"FY2024\" amount 1000000')"
+            
+        try:
+            name = name_match.group(1)
+            amount = float(amount_match.group(1))
+            aop = self.aop_service.create_aop(name, amount)
+            return f"AOP {name} created with amount ${amount:,.2f}"
+        except Exception as e:
+            return f"Error creating AOP: {str(e)}"
+
+    def _handle_add_budget(self, message: str) -> str:
+        """Handle add budget command"""
+        if not self.current_user:
+            return "Please specify your LDAP username first (use 'as <ldap>')"
+            
+        # Extract budget information
+        aop_match = re.search(r"aop\s+(\d+)", message)
+        amount_match = re.search(r"amount\s+(\d+(?:\.\d{2})?)", message)
+        project_match = re.search(r"project\s+\"([^\"]+)\"", message)
+        desc_match = re.search(r"description\s+\"([^\"]+)\"", message)
+        employee_match = re.search(r"for\s+(\w+)", message)
+        
+        missing = []
+        if not aop_match:
+            missing.append("AOP ID")
+        if not amount_match:
+            missing.append("amount")
+        if not project_match:
+            missing.append("project name (in quotes)")
+            
+        if missing:
+            return f"Please provide: {', '.join(missing)}"
+            
+        try:
+            budget_data = {
+                "aop_id": int(aop_match.group(1)),
+                "amount": float(amount_match.group(1)),
+                "project": project_match.group(1),
+                "description": desc_match.group(1) if desc_match else "",
+                "employee_ldap": employee_match.group(1) if employee_match else self.current_user.ldap
+            }
+            
+            budget = self.budget_service.create_budget(**budget_data)
+            return f"Budget created successfully with ID: {budget.budget_id}"
+        except Exception as e:
+            return f"Error creating budget: {str(e)}"
+
+    def _handle_update_budget_state(self, message: str) -> str:
+        """Handle update budget state command"""
+        budget_match = re.search(r"budget\s+(\w+)", message)
+        state_match = re.search(r"to\s+(active|inactive)", message)
+        
+        if not budget_match or not state_match:
+            return "Please specify budget ID and state (e.g., 'update budget state BUD001 to inactive')"
+            
+        try:
+            budget_id = budget_match.group(1)
+            is_active = state_match.group(1) == 'active'
+            self.budget_service.update_budget_state(budget_id, is_active)
+            return f"Budget {budget_id} state updated to {state_match.group(1)}"
+        except Exception as e:
+            return f"Error updating budget state: {str(e)}"
+
+    def _handle_reconcile_aop(self, message: str) -> str:
+        """Handle reconcile AOP command"""
+        aop_match = re.search(r"reconcile aop\s+(\d+)", message)
+        if not aop_match:
+            return "Please specify AOP ID (e.g., 'reconcile aop 1')"
+            
+        try:
+            aop_id = int(aop_match.group(1))
+            result = self.aop_service.reconcile_aop(aop_id)
+            
+            status = "compliant" if result['is_compliant'] else "non-compliant"
+            return (f"AOP Reconciliation Results:\n"
+                   f"AOP Amount: ${result['aop_amount']:,.2f}\n"
+                   f"Total Budget: ${result['total_budget']:,.2f}\n"
+                   f"Difference: ${result['difference']:,.2f}\n"
+                   f"Status: {status}")
+        except Exception as e:
+            return f"Error reconciling AOP: {str(e)}"
+
+    def _handle_external_query(self, message: str) -> str:
+        """Handle non-budget queries using external LLM service"""
+        # In a real implementation, this would integrate with an external LLM service
+        return "I understand this is a non-budget related query. [External LLM response would be provided here]"
+
+
+-----
+app>services>employee_service.py
+
+from typing import Optional, Dict, List
+from sqlalchemy.orm import Session
+from sqlalchemy import and_
+from .models import Employee, Budget, AOP
+
+class EmployeeService:
+    def __init__(self, db_session: Session):
+        self.db = db_session
+
+    def create_employee(self, ldap: str, first_name: str, last_name: str, 
+                       email: str, level: int, cost_center_code: str,
+                       manager_ldap: Optional[str] = None) -> Employee:
+        """Create or reactivate an employee"""
+        # Check for existing inactive employee
+        existing_employee = self.db.query(Employee).filter(
+            Employee.ldap == ldap
+        ).first()
+        
+        if existing_employee:
+            if existing_employee.is_active:
+                raise ValueError(f"Employee with LDAP {ldap} already exists")
+            # Reactivate employee
+            existing_employee.is_active = True
+            existing_employee.first_name = first_name
+            existing_employee.last_name = last_name
+            existing_employee.email = email
+            existing_employee.level = level
+            self.db.commit()
+            return existing_employee
+            
+        # Create new employee
+        employee = Employee(
+            ldap=ldap,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            level=level,
+            cost_center_code=cost_center_code
+        )
+        
+        if manager_ldap:
+            manager = self.db.query(Employee).filter(
+                Employee.ldap == manager_ldap,
+                Employee.is_active == True
+            ).first()
+            if not manager:
+                raise ValueError(f"Manager with LDAP {manager_ldap} not found")
+            employee.manager_id = manager.id
+            
+        self.db.add(employee)
+        self.db.commit()
+        return employee
+
+    def remove_employee(self, ldap: str) -> None:
+        """Remove (deactivate) an employee"""
+        employee = self.db.query(Employee).filter(
+            Employee.ldap == ldap,
+            Employee.is_active == True
+        ).first()
+        
+        if not employee:
+            raise ValueError(f"Active employee with LDAP {ldap} not found")
+            
+        # Check for active budgets
+        active_budgets = self.db.query(Budget).filter(
+            Budget.employee_id == employee.id,
+            Budget.is_active == True,
+            Budget.aop_id == AOP.id,
+            AOP.state == 'active'
+        ).first()
+        
+        if active_budgets:
+            raise ValueError("Cannot remove employee with active budgets")
+            
+        employee.is_active = False
+        self.db.commit()
+
+    def get_organization_hierarchy(self, ldap: str) -> Dict:
+        """Get organization hierarchy for an employee"""
+        def build_hierarchy(emp: Employee) -> Dict:
+            return {
+                'ldap': emp.ldap,
+                'name': f"{emp.first_name} {emp.last_name}",
+                'level': emp.level,
+                'reports': [build_hierarchy(report) for report in emp.reports if report.is_active]
+            }
+            
+        employee = self.db.query(Employee).filter(
+            Employee.ldap == ldap,
+            Employee.is_active == True
+        ).first()
+        
+        if not employee:
+            raise ValueError(f"Employee with LDAP {ldap} not found")
+            
+        return build_hierarchy(employee)
+
+    def get_all_reports(self, ldap: str) -> List[Employee]:
+        """Get all reports (direct and indirect) for an employee"""
+        def get_reports_recursive(emp: Employee) -> List[Employee]:
+            all_reports = []
+            for report in emp.reports:
+                if report.is_active:
+                    all_reports.append(report)
+                    all_reports.extend(get_reports_recursive(report))
+            return all_reports
+            
+        employee = self.db.query(Employee).filter(
+            Employee.ldap == ldap,
+            Employee.is_active == True
+        ).first()
+        
+        if not employee:
+            raise ValueError(f"Employee with LDAP {ldap} not found")
+            
+        return get_reports_recursive(employee)
+
+    def validate_employee_in_org(self, manager_ldap: str, employee_ldap: str) -> bool:
+        """Validate if an employee is in manager's organization"""
+        reports = self.get_all_reports(manager_ldap)
+        return any(report.ldap == employee_ldap for report in reports)
+
+----
+app>main.py
+
+from flask import Flask, request, jsonify, render_template
+from dotenv import load_dotenv
+import os
+from .services.chat_handler import ChatHandler
+from .models.database_models import Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+load_dotenv()
+
+app = Flask(__name__)
+
+# Database configuration
+DB_USER = os.getenv('DB_USER', 'budget_app')
+DB_PASS = os.getenv('DB_PASS', 'local_dev_password')
+DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_NAME = os.getenv('DB_NAME', 'budget_db')
+
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    data = request.json
+    message = data.get('message')
+    
+    if not message:
+        return jsonify({'error': 'No message provided'}), 400
+        
+    session = SessionLocal()
+    try:
+        chat_handler = ChatHandler(session)
+        response = chat_handler.process_message(message)
+        return jsonify({'response': response})
+    finally:
+        session.close()
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+---------------
+budget-management>scripts>setup.sh
+
+#!/bin/bash
+# setup.sh
+
+set -e
+
+alias python="py"
+
+# Full paths for Windows tools
+# GCLOUD="/c/Users/srama/AppData/Local/Google/Cloud\ SDK/google-cloud-sdk/bin/gcloud"
+GCLOUD="gcloud"
+TERRAFORM="/c/Terraform/terraform"
+# PSQL="/c/'Program Files'/PostgreSQL/17/bin/psql"
+PSQL="psql"
+export CLOUDSDK_PYTHON="py"
+
+# Check for required tools
+command -v "$TERRAFORM" >/dev/null 2>&1 || { echo "Terraform is required but not installed. Aborting." >&2; exit 1; }
+command -v "$GCLOUD" >/dev/null 2>&1 || { echo "Google Cloud SDK is required but not installed. Aborting." >&2; exit 1; }
+command -v "$PSQL" >/dev/null 2>&1 || { echo "PostgreSQL client is required but not installed. Aborting." >&2; exit 1; }
+
+# Configuration
+PROJECT_ID="budget-management-449817"
+REGION="us-west2"
+DB_PASSWORD=$(openssl rand -base64 32)
+
+# Initialize GCP project
+echo "Initializing GCP project..."
+gcloud config set project $PROJECT_ID
+
+# Initialize Terraform
+echo "Initializing Terraform..."
+terraform init
+
+# Create terraform.tfvars
+cat > terraform.tfvars <<EOF
+project_id = "${PROJECT_ID}"
+region     = "${REGION}"
+db_password = "${DB_PASSWORD}"
+EOF
+
+# Apply Terraform configuration
+echo "Applying Terraform configuration..."
+terraform apply -auto-approve
+
+# Get database instance name
+DB_INSTANCE=$(terraform output -raw db_instance_name)
+
+# Wait for database to be ready
+echo "Waiting for database to be ready..."
+sleep 60  # Adjust if needed
+
+# Download and start Cloud SQL Proxy
+echo "Setting up Cloud SQL Proxy..."
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.darwin.amd64
+else
+    wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+fi
+chmod +x cloud_sql_proxy
+
+# Start Cloud SQL Proxy in background
+./cloud_sql_proxy -instances=${PROJECT_ID}:${REGION}:${DB_INSTANCE}=tcp:5432 &
+PROXY_PID=$!
+
+# Wait for proxy to be ready
+sleep 10
+
+# Create database schema
+echo "Creating database schema..."
+PGPASSWORD=$DB_PASSWORD psql -h localhost -U budget_app -d budget_management <<EOF
+CREATE TABLE users (
+    ldap VARCHAR(50) PRIMARY KEY,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    email VARCHAR(255) UNIQUE,
+    level INTEGER CHECK (level >= 1 AND level <= 12)
+);
+
+CREATE TABLE org_hierarchy (
+    employee_ldap VARCHAR(50) REFERENCES users(ldap),
+    manager_ldap VARCHAR(50) REFERENCES users(ldap),
+    PRIMARY KEY (employee_ldap)
+);
+
+CREATE TABLE annual_operating_plans (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE,
+    state VARCHAR(20) DEFAULT 'draft',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT valid_state CHECK (state IN ('draft', 'active', 'EOL'))
+);
+
+CREATE TABLE budgets (
+    id SERIAL PRIMARY KEY,
+    unique_identifier VARCHAR(50) UNIQUE,
+    aop_id INTEGER REFERENCES annual_operating_plans(id),
+    requestor_ldap VARCHAR(50) REFERENCES users(ldap),
+    responsible_ldap VARCHAR(50) REFERENCES users(ldap),
+    budget_driver VARCHAR(255),
+    description TEXT,
+    amount DECIMAL(15,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+EOF
+
+# Clean up
+kill $PROXY_PID
+
+echo "Setup complete!"
+echo "Database password: $DB_PASSWORD"
+echo "Please save these credentials securely."
+echo "Cloud Run URL: $(terraform output -raw cloud_run_url)"
+
+-----
+
+budget-management>scripts>terraform.tfvars
+
+project_id = "budget-management-449817"
+region     = "us-west2"
+db_password = "wH1T7kARyK0QnpMIjPm59dNAqiHH3iZmY99G+ESL92M="
+
+
+--------------
+budget-management>terraform>main.tf
+# main.tf
+provider "google" {
+  project = var.project_id
+  region  = var.region
+}
+
+provider "google-beta" {
+  project = var.project_id
+  region  = var.region
+}
+
+# Enable required APIs
+resource "google_project_service" "apis" {
+  for_each = toset([
+    "cloudsql.googleapis.com",
+    "run.googleapis.com",
+    "secretmanager.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "firebase.googleapis.com"
+  ])
+  project = var.project_id
+  service = each.key
+}
+
+# Create Cloud SQL instance
+resource "google_sql_database_instance" "budget_db" {
+  name             = "budget-db"
+  database_version = "POSTGRES_13"
+  region           = var.region
+
+  settings {
+    tier = "db-f1-micro"
+    backup_configuration {
+      enabled = true
+      start_time = "04:00"
+    }
+  }
+
+  deletion_protection = false  # Set to true in production
+}
+
+# Create database
+resource "google_sql_database" "budget_management" {
+  name     = "budget_management"
+  instance = google_sql_database_instance.budget_db.name
+}
+
+# Create database user
+resource "google_sql_user" "budget_app" {
+  name     = "budget_app"
+  instance = google_sql_database_instance.budget_db.name
+  password = var.db_password
+}
+
+# Create service account
+resource "google_service_account" "budget_app" {
+  account_id   = "budget-app-sa"
+  display_name = "Budget Management App Service Account"
+}
+
+# Grant permissions
+resource "google_project_iam_member" "sql_client" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.budget_app.email}"
+}
+
+resource "google_project_iam_member" "secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.budget_app.email}"
+}
+
+# Deploy Cloud Run service
+resource "google_cloud_run_service" "budget_management" {
+  name     = "budget-management"
+  location = var.region
+
+  template {
+    spec {
+      service_account_name = google_service_account.budget_app.email
+      containers {
+        image = "gcr.io/${var.project_id}/budget-app:latest"
+        
+        env {
+          name  = "INSTANCE_CONNECTION_NAME"
+          value = google_sql_database_instance.budget_db.connection_name
+        }
+        
+        env {
+          name  = "DB_NAME"
+          value = google_sql_database.budget_management.name
+        }
+        
+        env {
+          name  = "DB_USER"
+          value = google_sql_user.budget_app.name
+        }
+
+        resources {
+          limits = {
+            cpu    = "1000m"
+            memory = "512Mi"
+          }
+        }
+      }
+    }
+  }
+
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+}
+
+-------------
+budget-management>terraform>outputs.tf
+# outputs.tf
+output "db_instance_name" {
+  value = google_sql_database_instance.budget_db.name
+}
+
+output "cloud_run_url" {
+  value = google_cloud_run_service.budget_management.status[0].url
+}
+-----
+budget-management>terraform>terraform.tfstate
+{
+  "version": 4,
+  "terraform_version": "1.10.5",
+  "serial": 8,
+  "lineage": "0edf2c2b-3db9-e5f0-c27d-eed4430988fb",
+  "outputs": {
+    "db_instance_name": {
+      "value": "budget-db",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "google_project_iam_member",
+      "name": "secret_accessor",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "condition": [],
+            "etag": "BwYtSBvEET4=",
+            "id": "budget-management-449817/roles/secretmanager.secretAccessor/serviceAccount:budget-app-sa@budget-management-449817.iam.gserviceaccount.com",
+            "member": "serviceAccount:budget-app-sa@budget-management-449817.iam.gserviceaccount.com",
+            "project": "budget-management-449817",
+            "role": "roles/secretmanager.secretAccessor"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "google_service_account.budget_app"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "google_project_iam_member",
+      "name": "sql_client",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "condition": [],
+            "etag": "BwYtSBvEET4=",
+            "id": "budget-management-449817/roles/cloudsql.client/serviceAccount:budget-app-sa@budget-management-449817.iam.gserviceaccount.com",
+            "member": "serviceAccount:budget-app-sa@budget-management-449817.iam.gserviceaccount.com",
+            "project": "budget-management-449817",
+            "role": "roles/cloudsql.client"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "google_service_account.budget_app"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "google_project_service",
+      "name": "apis",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "index_key": "cloudresourcemanager.googleapis.com",
+          "schema_version": 0,
+          "attributes": {
+            "disable_dependent_services": null,
+            "disable_on_destroy": true,
+            "id": "budget-management-449817/cloudresourcemanager.googleapis.com",
+            "project": "budget-management-449817",
+            "service": "cloudresourcemanager.googleapis.com",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInJlYWQiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        },
+        {
+          "index_key": "firebase.googleapis.com",
+          "schema_version": 0,
+          "attributes": {
+            "disable_dependent_services": null,
+            "disable_on_destroy": true,
+            "id": "budget-management-449817/firebase.googleapis.com",
+            "project": "budget-management-449817",
+            "service": "firebase.googleapis.com",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInJlYWQiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        },
+        {
+          "index_key": "run.googleapis.com",
+          "schema_version": 0,
+          "attributes": {
+            "disable_dependent_services": null,
+            "disable_on_destroy": true,
+            "id": "budget-management-449817/run.googleapis.com",
+            "project": "budget-management-449817",
+            "service": "run.googleapis.com",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInJlYWQiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        },
+        {
+          "index_key": "secretmanager.googleapis.com",
+          "schema_version": 0,
+          "attributes": {
+            "disable_dependent_services": null,
+            "disable_on_destroy": true,
+            "id": "budget-management-449817/secretmanager.googleapis.com",
+            "project": "budget-management-449817",
+            "service": "secretmanager.googleapis.com",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInJlYWQiOjYwMDAwMDAwMDAwMCwidXBkYXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "google_service_account",
+      "name": "budget_app",
+      "provider": "provider[\"registry.terraform.io/hashicorp/google\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "account_id": "budget-app-sa",
+            "create_ignore_already_exists": null,
+            "description": "",
+            "disabled": false,
+            "display_name": "Budget Management App Service Account",
+            "email": "budget-app-sa@budget-management-449817.iam.gserviceaccount.com",
+            "id": "projects/budget-management-449817/serviceAccounts/budget-app-sa@budget-management-449817.iam.gserviceaccount.com",
+            "member": "serviceAccount:budget-app-sa@budget-management-449817.iam.gserviceaccount.com",
+            "name": "projects/budget-management-449817/serviceAccounts/budget-app-sa@budget-management-449817.iam.gserviceaccount.com",
+            "project": "budget-management-449817",
+            "timeouts": null,
+            "unique_id": "101184897898276165624"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDB9fQ=="
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}
+------------
+budget-management>terraform>terraform.tfvars
+project_id = "budget-management-449817"
+region     = "us-west2"
+db_password = [your password here]
+-------
+budget-management>terraform>variables.tf
+
+# variables.tf
+variable "project_id" {
+  description = "GCP Project ID"
+  type        = string
+}
+
+variable "region" {
+  description = "GCP Region"
+  type        = string
+  default     = "us-west2"
+}
+
+variable "db_password" {
+  description = "Database password"
+  type        = string
+  sensitive   = true
+}
+
+
+
