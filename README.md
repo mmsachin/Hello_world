@@ -1,2 +1,38 @@
 # Hello_world
 My first project
+BM is a three tier application on GCP that has a data persistence layer, a business logic layer and a user experience layer. The goal is to manage the budget lifecycle across one more annual operating plans.
+
+Annual operating plans definition - Annual operating plan (AOP) has a header and detail content. The header is represented by a name, total approved amount and has the states draft, active and EOL. There can only be one active AOP at any given time. The user should be able to set the lifecycle of an AOP. You can reset a draft AOP to active or an EOL AOP to active. When the AOP is set to active, we should ensure that the total amounts across active budgets cannot exceed the total amount in active AOP. If there is no lifecycle stated, the default lifecycle will be draft when a new AOP is created. The detail will have the AOP header reference, cost center and the amount for the cost center. When the AOP detail is updated, the total amount of AOP should be calculated and updated for the header so that the total amount is easily accessible. Once an AOP is in  the active state, no modification to the AOP amounts are permitted unless the process that is used to update the AOP is through a special process called Adjusted Plan. The specifics of Adjusted Plan will be discussed later in the doc. We will have CRUD APIs for AOP
+
+Cost center - We will have a master list of cost centers which will be shown by cost center code and cost center name. We will have CRUD APIs for Cost Centers
+
+Employees - Employees are users of this application. A user will be represented by LDAP, first name, last name, email, level, cost center code. We will also have an organization hierarchy that will have the manager employee relationship for the organization. The level for employees will be from 1 through 12. We will have CRUD APIs for employees and organization hierarchy
+
+Budgets - A budget is a line item of spend for an employee. Every employee can request for budget for themselves or for an employee within their org if they have reporting structure per the organization hierarchy. For every budget line we will assign a unique identifier. All budgets are associated with an AOP. The budget can be active or inactive should the user want to remove a budget. The total amounts across active budgets in an AOP cannot exceed the total amount of all active budgets. For every budget line entry, the user will provide a project, a short description, the amount and the ldap of the employee responsible for budget. If the employee is not a manager, then the default is themselves and not be able to set budget for others. If the user is a manager, they should able to set budget to one of their employee within their organization. A users cannot set budget for employees who are not within their organization. For every budget line, we will also have purchase requisition amount, purchase order amount and receipt amount. These amounts are typically referred to as actuals. The actuals cannot exceed the budget. We will have APIs to update actuals. The actuals update will be incremental meaning, we will get a purchase request to add an amount of say $30. All amounts are in us dollars. Here is the information we will collect for actuals:
+Purchase requests: purchase requisition reference, requestor ldap, budget identifier (should be valid against the budgets we created), requisition amount, date
+Purchase orders: purchase order number, purchase order line number, requestor ldap, budget identifier (should be valid against the budgets we created), purchase item, amount, date
+Receipts will only have receipt date, purchase order number, purchase order line number, purchase item and will be matched to ensure that receipts are made against purchase orders
+We will have CRUD APIs for budgets, purchase requests, purchase orders and receipts. When any of the actuals are update, we will summarize the totals for that budget id and update the budget. When updating budget, if any of the amounts exceed budget, we will raise and error and fail the API or show the user an error if they are using the front end
+
+Budget management features: Here are all the capabilities that I would the user to be able to do:
+Copy budget: User should be able to specify a budget identifier and the target AOP to copy a budget to. When copying the budget, a new budget identifier should be generated in the destination AOP. If the destination AOP is an active AOP, it is important to ensure that the total budgets within AOP cannot exceed the amount on AOP
+Remove budget: The database should never lose a budget. Removed of budget is a flag in database
+Reconcile budget: At any time, the user should be able to run a reconciliation process where the amount on AOP is compared with the totals on active budgets and ensure that the budget for the AOP comply
+Reduce budget: If the user wants to reduce the amount in a budget, it cannot be reduce below the amounts of active actuals
+
+User experience: The user interface layer will be a chat interface versus a traditional forms based display. The user should be able to provide commands to the chatbot per the following:
+Add user: This conversation should support adding a user. All mandatory fields should be prompted for if not provided by the user. For example, the user should be able to say add user lsamuel (ldap) and the chatbot should prompt to user to provide first name, last name, email, level and cost center code. If the user provides the command as add user with ldap lsamuel, first name Samuel, last name Larkins, then the chatbot prompt for email, level and cost center code. If there is an add user for a previously removed user, just mark the ldap active 
+Remove user: No removes should be done in the database. Removed users should be marked inactive. An active user with an active budget within an active AOP cannot be removed. All other users can be removed
+Similar rules apply for all transactions
+Charting: User should be able to ask for bar chart of budgets (paretto top 10 etc) for an AOP
+Non budget queries: If the user ask queries not related to budget, automatically process the same based on standard LLM app. For example, what is the weather in San Francisco.
+
+Website: The UX will be a website UX. Should be accessible from open internet.
+
+Authentication: There is no active sign-on for this application. If the user enters “IKnowYou241202”, the system should know that they are a valid user and allow for subsequent operations. If the user does not enter this code, then the error should be displayed to state the they are not an authenticated user.
+
+Reporting: The user should be able to report data fairly easily per the following:
+Show me my organization: Show the organization hierarchy for the user. Note that if a person A reports to B and B reports to C, when the user C says show me my organization, the report should show the hierarchy of A to B and B to C. If C has D and E reporting to them, that should also be shown
+Show me my budget: Show the budgets totals for the user. This should only include the total budgets across C, D and E per the above example. If D and E have additional reports, then those should be automatically included as well
+
+The application will be a 3 tier application on GCP. The total number of users is only 10. We expect to manage about 1000 budget lines in total. The cost across all GCP services should not exceed $50. The code repository should be github. Please include setup instructions for github, GCP and provide CI/CD instruction for object creation. The business logic can be in python or Java. Provide code base, deployment instructions, functional test cases for this.
