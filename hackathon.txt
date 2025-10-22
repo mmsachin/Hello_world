@@ -1,0 +1,2155 @@
+I want to create a app for my hackathon. I want to demo quickly. Give me .md file which will give me step by step details to build the APp. Front end - Angular backend - Java. It should look like a professional webpage, have lolgin page with mock login id. Idea is create a personal finance assistant (suggest better name). It will have details of the financial data like you bank accounts, credit cards, 401k, HSA.  tHE APP SHOULD have a landing page which will display net worth broken in amount in bank, 401k etc and total debits. When clicked it should show details asneeded. There should also be a chat feature which will call gemini 2.5 flash and help you as your personal finance assistant like pay your credit card bills on time, help plan my large expense etc. It should show buttons (mock onlu) to link your accounts. For Hackathon we will use mock data. I want you to create the MD file and split into different phases so AI can follow and do it incrementally.
+
+
+Thinking about designing a phased hackathon app combining Angular frontend, Java backend, mock financial data, and Gemini AI integration.
+
+----------
+
+# WealthWise - Personal Finance Assistant
+## Hackathon Development Guide
+
+**App Name:** WealthWise (Your AI-Powered Financial Companion)
+
+**Stack:**
+- Frontend: Angular 
+- Backend: Java Spring Boot
+- AI Integration: Google Gemini 2.5 Flash
+- Mock Data: Predefined JSON
+
+---
+
+## 📋 App Overview
+
+WealthWise is a personal finance dashboard that helps users:
+- View consolidated net worth across all accounts
+- Track bank accounts, credit cards, 401k, and HSA
+- Get AI-powered financial advice via chat
+- Manage expenses and receive smart payment reminders
+
+---
+
+## 🎯 Phase 1: Project Setup & Structure (30 mins)
+
+### Frontend Setup (Angular)
+
+```bash
+# Install Angular CLI
+npm install -g @angular/cli
+
+# Create new Angular project
+ng new wealthwise-frontend
+# Select: Yes for routing, CSS for styling
+
+cd wealthwise-frontend
+
+# Install required dependencies
+npm install @angular/material @angular/cdk
+npm install chart.js ng2-charts
+npm install @angular/common @angular/forms
+```
+
+### Backend Setup (Java Spring Boot)
+
+```bash
+# Use Spring Initializr (start.spring.io) or create manually
+# Dependencies needed:
+# - Spring Web
+# - Spring Boot DevTools
+# - Lombok
+# - Spring Security (for mock auth)
+```
+
+**Project Structure:**
+```
+wealthwise-backend/
+├── src/main/java/com/wealthwise/
+│   ├── WealthwiseApplication.java
+│   ├── controller/
+│   ├── model/
+│   ├── service/
+│   ├── config/
+│   └── dto/
+└── src/main/resources/
+    ├── application.properties
+    └── mock-data/
+```
+
+**Angular Structure:**
+```
+src/app/
+├── components/
+│   ├── login/
+│   ├── dashboard/
+│   ├── account-details/
+│   └── chat/
+├── services/
+│   ├── auth.service.ts
+│   ├── finance.service.ts
+│   └── chat.service.ts
+├── models/
+└── guards/
+```
+
+### application.properties (Backend)
+```properties
+server.port=8080
+spring.application.name=wealthwise
+spring.security.user.name=demo@wealthwise.com
+spring.security.user.password=demo123
+```
+
+---
+
+## 🔐 Phase 2: Authentication & Routing (45 mins)
+
+### Backend - Mock Authentication
+
+**SecurityConfig.java**
+```java
+package com.wealthwise.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .cors().and()
+            .csrf().disable()
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .anyRequest().permitAll()
+            );
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+}
+```
+
+**AuthController.java**
+```java
+package com.wealthwise.controller;
+
+import com.wealthwise.dto.LoginRequest;
+import com.wealthwise.dto.LoginResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:4200")
+public class AuthController {
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+        // Mock authentication
+        if ("demo@wealthwise.com".equals(request.getEmail()) && 
+            "demo123".equals(request.getPassword())) {
+            LoginResponse response = new LoginResponse(
+                "mock-jwt-token-12345",
+                "demo@wealthwise.com",
+                "Demo User"
+            );
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.status(401).build();
+    }
+}
+```
+
+**DTOs:**
+```java
+// LoginRequest.java
+package com.wealthwise.dto;
+
+import lombok.Data;
+
+@Data
+public class LoginRequest {
+    private String email;
+    private String password;
+}
+
+// LoginResponse.java
+package com.wealthwise.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class LoginResponse {
+    private String token;
+    private String email;
+    private String name;
+}
+```
+
+### Frontend - Login Component
+
+**login.component.ts**
+```typescript
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  email: string = '';
+  password: string = '';
+  errorMessage: string = '';
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  onLogin() {
+    this.authService.login(this.email, this.password).subscribe({
+      next: (response) => {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', response.name);
+        this.router.navigate(['/dashboard']);
+      },
+      error: (error) => {
+        this.errorMessage = 'Invalid credentials. Try: demo@wealthwise.com / demo123';
+      }
+    });
+  }
+}
+```
+
+**login.component.html**
+```html
+<div class="login-container">
+  <div class="login-card">
+    <div class="logo-section">
+      <h1 class="app-logo">💰 WealthWise</h1>
+      <p class="tagline">Your AI-Powered Financial Companion</p>
+    </div>
+    
+    <form (ngSubmit)="onLogin()" class="login-form">
+      <h2>Welcome Back</h2>
+      
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          [(ngModel)]="email" 
+          name="email"
+          placeholder="demo@wealthwise.com"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          [(ngModel)]="password" 
+          name="password"
+          placeholder="demo123"
+          required
+        />
+      </div>
+      
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+      
+      <button type="submit" class="login-button">Sign In</button>
+      
+      <div class="demo-credentials">
+        <p><strong>Demo Credentials:</strong></p>
+        <p>Email: demo@wealthwise.com</p>
+        <p>Password: demo123</p>
+      </div>
+    </form>
+  </div>
+</div>
+```
+
+**login.component.css**
+```css
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.login-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  max-width: 450px;
+  width: 100%;
+}
+
+.logo-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.app-logo {
+  font-size: 2.5rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.tagline {
+  margin: 10px 0 0 0;
+  opacity: 0.9;
+  font-size: 1rem;
+}
+
+.login-form {
+  padding: 40px;
+}
+
+.login-form h2 {
+  margin: 0 0 30px 0;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #555;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.login-button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+}
+
+.demo-credentials {
+  margin-top: 30px;
+  padding: 20px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.demo-credentials p {
+  margin: 5px 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.error-message {
+  color: #d32f2f;
+  margin: 15px 0;
+  padding: 10px;
+  background: #ffebee;
+  border-radius: 5px;
+  font-size: 0.9rem;
+}
+```
+
+**auth.service.ts**
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthService {
+  private apiUrl = 'http://localhost:8080/api/auth';
+
+  constructor(private http: HttpClient) {}
+
+  login(email: string, password: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/login`, { email, password });
+  }
+
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem('token');
+  }
+
+  logout(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }
+}
+```
+
+---
+
+## 💼 Phase 3: Dashboard & Data Models (60 mins)
+
+### Backend - Data Models
+
+**Account.java**
+```java
+package com.wealthwise.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class Account {
+    private String id;
+    private String name;
+    private String type; // CHECKING, SAVINGS, CREDIT_CARD, 401K, HSA
+    private double balance;
+    private String accountNumber;
+    private String institution;
+    private boolean isLinked;
+}
+```
+
+**Transaction.java**
+```java
+package com.wealthwise.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import java.time.LocalDate;
+
+@Data
+@AllArgsConstructor
+public class Transaction {
+    private String id;
+    private String accountId;
+    private String description;
+    private double amount;
+    private LocalDate date;
+    private String category;
+    private String type; // DEBIT, CREDIT
+}
+```
+
+**NetWorthSummary.java**
+```java
+package com.wealthwise.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import java.util.Map;
+
+@Data
+@AllArgsConstructor
+public class NetWorthSummary {
+    private double totalAssets;
+    private double totalLiabilities;
+    private double netWorth;
+    private Map<String, Double> assetBreakdown;
+    private Map<String, Double> liabilityBreakdown;
+}
+```
+
+### Backend - Mock Data Service
+
+**MockDataService.java**
+```java
+package com.wealthwise.service;
+
+import com.wealthwise.model.Account;
+import com.wealthwise.model.Transaction;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class MockDataService {
+
+    public List<Account> getMockAccounts() {
+        List<Account> accounts = new ArrayList<>();
+        
+        accounts.add(new Account(
+            "acc1", "Chase Checking", "CHECKING", 
+            15420.50, "****1234", "Chase Bank", true
+        ));
+        
+        accounts.add(new Account(
+            "acc2", "Ally Savings", "SAVINGS", 
+            42350.75, "****5678", "Ally Bank", true
+        ));
+        
+        accounts.add(new Account(
+            "acc3", "Chase Freedom", "CREDIT_CARD", 
+            -2840.25, "****9012", "Chase Bank", true
+        ));
+        
+        accounts.add(new Account(
+            "acc4", "Discover Card", "CREDIT_CARD", 
+            -1205.60, "****3456", "Discover", true
+        ));
+        
+        accounts.add(new Account(
+            "acc5", "Fidelity 401(k)", "401K", 
+            125680.40, "****7890", "Fidelity", true
+        ));
+        
+        accounts.add(new Account(
+            "acc6", "HSA Account", "HSA", 
+            8750.20, "****2468", "HealthEquity", true
+        ));
+        
+        return accounts;
+    }
+
+    public List<Transaction> getMockTransactions(String accountId) {
+        List<Transaction> transactions = new ArrayList<>();
+        
+        if ("acc1".equals(accountId)) {
+            transactions.add(new Transaction(
+                "t1", accountId, "Salary Deposit", 
+                5500.00, LocalDate.now().minusDays(5), "Income", "CREDIT"
+            ));
+            transactions.add(new Transaction(
+                "t2", accountId, "Amazon Purchase", 
+                -156.78, LocalDate.now().minusDays(3), "Shopping", "DEBIT"
+            ));
+            transactions.add(new Transaction(
+                "t3", accountId, "Whole Foods", 
+                -89.45, LocalDate.now().minusDays(2), "Groceries", "DEBIT"
+            ));
+        }
+        
+        return transactions;
+    }
+}
+```
+
+**FinanceController.java**
+```java
+package com.wealthwise.controller;
+
+import com.wealthwise.dto.NetWorthSummary;
+import com.wealthwise.model.Account;
+import com.wealthwise.model.Transaction;
+import com.wealthwise.service.MockDataService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/finance")
+@CrossOrigin(origins = "http://localhost:4200")
+public class FinanceController {
+
+    @Autowired
+    private MockDataService mockDataService;
+
+    @GetMapping("/accounts")
+    public ResponseEntity<List<Account>> getAccounts() {
+        return ResponseEntity.ok(mockDataService.getMockAccounts());
+    }
+
+    @GetMapping("/accounts/{id}/transactions")
+    public ResponseEntity<List<Transaction>> getTransactions(@PathVariable String id) {
+        return ResponseEntity.ok(mockDataService.getMockTransactions(id));
+    }
+
+    @GetMapping("/networth")
+    public ResponseEntity<NetWorthSummary> getNetWorth() {
+        List<Account> accounts = mockDataService.getMockAccounts();
+        
+        double totalAssets = 0;
+        double totalLiabilities = 0;
+        Map<String, Double> assetBreakdown = new HashMap<>();
+        Map<String, Double> liabilityBreakdown = new HashMap<>();
+        
+        for (Account account : accounts) {
+            if (account.getBalance() >= 0) {
+                totalAssets += account.getBalance();
+                assetBreakdown.put(account.getType(), 
+                    assetBreakdown.getOrDefault(account.getType(), 0.0) + account.getBalance());
+            } else {
+                totalLiabilities += Math.abs(account.getBalance());
+                liabilityBreakdown.put(account.getType(), 
+                    liabilityBreakdown.getOrDefault(account.getType(), 0.0) + Math.abs(account.getBalance()));
+            }
+        }
+        
+        NetWorthSummary summary = new NetWorthSummary(
+            totalAssets,
+            totalLiabilities,
+            totalAssets - totalLiabilities,
+            assetBreakdown,
+            liabilityBreakdown
+        );
+        
+        return ResponseEntity.ok(summary);
+    }
+
+    @PostMapping("/accounts/link")
+    public ResponseEntity<Map<String, String>> linkAccount(@RequestBody Map<String, String> request) {
+        // Mock account linking
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "Account linked successfully (Mock)");
+        return ResponseEntity.ok(response);
+    }
+}
+```
+
+### Frontend - Dashboard Component
+
+**dashboard.component.ts**
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { FinanceService } from '../../services/finance.service';
+
+@Component({
+  selector: 'app-dashboard',
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css']
+})
+export class DashboardComponent implements OnInit {
+  netWorthData: any;
+  accounts: any[] = [];
+  userName: string = '';
+  isLoading: boolean = true;
+
+  constructor(
+    private financeService: FinanceService,
+    private router: Router
+  ) {}
+
+  ngOnInit() {
+    this.userName = localStorage.getItem('user') || 'User';
+    this.loadDashboardData();
+  }
+
+  loadDashboardData() {
+    this.financeService.getNetWorth().subscribe({
+      next: (data) => {
+        this.netWorthData = data;
+        this.loadAccounts();
+      },
+      error: (error) => console.error('Error loading net worth:', error)
+    });
+  }
+
+  loadAccounts() {
+    this.financeService.getAccounts().subscribe({
+      next: (accounts) => {
+        this.accounts = accounts;
+        this.isLoading = false;
+      },
+      error: (error) => console.error('Error loading accounts:', error)
+    });
+  }
+
+  viewAccountDetails(accountId: string) {
+    this.router.navigate(['/account', accountId]);
+  }
+
+  openChat() {
+    this.router.navigate(['/chat']);
+  }
+
+  linkNewAccount() {
+    alert('Account linking (Mock) - In production, this would open Plaid/MX integration');
+  }
+
+  logout() {
+    localStorage.clear();
+    this.router.navigate(['/login']);
+  }
+
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  }
+}
+```
+
+**dashboard.component.html**
+```html
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1 class="app-title">💰 WealthWise</h1>
+      <div class="header-actions">
+        <span class="user-name">Welcome, {{ userName }}</span>
+        <button class="btn-secondary" (click)="openChat()">💬 AI Assistant</button>
+        <button class="btn-link" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="dashboard-content" *ngIf="!isLoading">
+    <!-- Net Worth Summary -->
+    <section class="net-worth-section">
+      <div class="summary-card main-card">
+        <h2>Your Net Worth</h2>
+        <div class="net-worth-amount">
+          {{ formatCurrency(netWorthData.netWorth) }}
+        </div>
+        <div class="net-worth-breakdown">
+          <div class="breakdown-item assets">
+            <span class="label">Total Assets</span>
+            <span class="amount">{{ formatCurrency(netWorthData.totalAssets) }}</span>
+          </div>
+          <div class="breakdown-item liabilities">
+            <span class="label">Total Debts</span>
+            <span class="amount">{{ formatCurrency(netWorthData.totalLiabilities) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="breakdown-cards">
+        <div class="summary-card">
+          <h3>Assets Breakdown</h3>
+          <div class="breakdown-list">
+            <div *ngFor="let item of netWorthData.assetBreakdown | keyvalue" class="breakdown-row">
+              <span class="category">{{ item.key }}</span>
+              <span class="value">{{ formatCurrency(item.value) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <h3>Debts Breakdown</h3>
+          <div class="breakdown-list">
+            <div *ngFor="let item of netWorthData.liabilityBreakdown | keyvalue" class="breakdown-row">
+              <span class="category">{{ item.key }}</span>
+              <span class="value">{{ formatCurrency(item.value) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Accounts Section -->
+    <section class="accounts-section">
+      <div class="section-header">
+        <h2>Your Accounts</h2>
+        <button class="btn-primary" (click)="linkNewAccount()">
+          + Link New Account
+        </button>
+      </div>
+
+      <div class="accounts-grid">
+        <div *ngFor="let account of accounts" 
+             class="account-card" 
+             [class.negative]="account.balance < 0"
+             (click)="viewAccountDetails(account.id)">
+          <div class="account-icon">
+            {{ getAccountIcon(account.type) }}
+          </div>
+          <div class="account-info">
+            <h3>{{ account.name }}</h3>
+            <p class="account-number">{{ account.accountNumber }}</p>
+            <p class="institution">{{ account.institution }}</p>
+          </div>
+          <div class="account-balance">
+            <span class="balance-amount" [class.negative]="account.balance < 0">
+              {{ formatCurrency(account.balance) }}
+            </span>
+            <span class="account-type">{{ account.type }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions">
+      <h2>Quick Actions</h2>
+      <div class="actions-grid">
+        <button class="action-card" (click)="openChat()">
+          <span class="action-icon">🤖</span>
+          <span class="action-title">Ask AI Assistant</span>
+        </button>
+        <button class="action-card" (click)="linkNewAccount()">
+          <span class="action-icon">🔗</span>
+          <span class="action-title">Link Account</span>
+        </button>
+        <button class="action-card">
+          <span class="action-icon">📊</span>
+          <span class="action-title">View Reports</span>
+        </button>
+        <button class="action-card">
+          <span class="action-icon">⚙️</span>
+          <span class="action-title">Settings</span>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="loading-spinner" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading your financial data...</p>
+  </div>
+</div>
+```
+
+**dashboard.component.css**
+```css
+.dashboard-container {
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.dashboard-header {
+  background: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-title {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #667eea;
+}
+
+.header-actions {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #555;
+}
+
+.dashboard-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px;
+}
+
+.net-worth-section {
+  margin-bottom: 40px;
+}
+
+.main-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+}
+
+.main-card h2 {
+  margin: 0 0 20px 0;
+  font-size: 1.3rem;
+  opacity: 0.9;
+}
+
+.net-worth-amount {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+
+.net-worth-breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.breakdown-item {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.breakdown-item .label {
+  display: block;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.breakdown-item .amount {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.breakdown-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.summary-card {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.summary-card h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.breakdown-row .category {
+  color: #666;
+  font-weight: 500;
+}
+
+.breakdown-row .value {
+  color: #333;
+  font-weight: 600;
+}
+
+.accounts-section {
+  margin-bottom: 40px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.account-card {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.account-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.account-card.negative {
+  border-left: 4px solid #e74c3c;
+}
+
+.account-icon {
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 12px;
+}
+
+.account-info {
+  flex: 1;
+}
+
+.account-info h3 {
+  margin: 0 0 5px 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.account-number {
+  margin: 0;
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.institution {
+  margin: 5px 0 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.account-balance {
+  text-align: right;
+}
+
+.balance-amount {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #27ae60;
+  margin-bottom: 5px;
+}
+
+.balance-amount.negative {
+  color: #e74c3c;
+}
+
+.account-type {
+  display: block;
+  font-size: 0.8rem;
+  color: #999;
+  text-transform: uppercase;
+}
+
+.quick-actions {
+  margin-bottom: 40px;
+}
+
+.quick-actions h2 {
+  margin: 0 0 25px 0;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.action-card {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.action-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.action-icon {
+  font-size: 2.5rem;
+}
+
+.action-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Buttons */
+.btn-primary, .btn-secondary, .btn-link {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.btn-link {
+  background: transparent;
+  color: #667eea;
+  padding: 8px 16px;
+}
+
+.btn-link:hover {
+  background: #f0f0f0;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner p {
+  margin-top: 20px;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .breakdown-cards, .net-worth-breakdown {
+    grid-template-columns: 1fr;
+  }
+  
+  .accounts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 15px;
+  }
+}
+```
+
+**finance.service.ts**
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FinanceService {
+  private apiUrl = 'http://localhost:8080/api/finance';
+
+  constructor(private http: HttpClient) {}
+
+  getAccounts(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/accounts`);
+  }
+
+  getAccountTransactions(accountId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/accounts/${accountId}/transactions`);
+  }
+
+  getNetWorth(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/networth`);
+  }
+
+  linkAccount(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/accounts/link`, data);
+  }
+}
+```
+
+---
+
+## 📱 Phase 4: Account Details View (30 mins)
+
+**account-details.component.ts**
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FinanceService } from '../../services/finance.service';
+
+@Component({
+  selector: 'app-account-details',
+  templateUrl: './account-details.component.html',
+  styleUrls: ['./account-details.component.css']
+})
+export class AccountDetailsComponent implements OnInit {
+  account: any;
+  transactions: any[] = [];
+  isLoading: boolean = true;
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private financeService: FinanceService
+  ) {}
+
+  ngOnInit() {
+    const accountId = this.route.snapshot.params['id'];
+    this.loadAccountDetails(accountId);
+  }
+
+  loadAccountDetails(accountId: string) {
+    this.financeService.getAccounts().subscribe({
+      next: (accounts) => {
+        this.account = accounts.find(acc => acc.id === accountId);
+        this.loadTransactions(accountId);
+      },
+      error: (error) => console.error('Error loading account:', error)
+    });
+  }
+
+  loadTransactions(accountId: string) {
+    this.financeService.getAccountTransactions(accountId).subscribe({
+      next: (transactions) => {
+        this.transactions = transactions;
+        this.isLoading = false;
+      },
+      error: (error) => console.error('Error loading transactions:', error)
+    });
+  }
+
+  goBack() {
+    this.router.navigate(['/dashboard']);
+  }
+
+  formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  }
+}
+```
+
+**account-details.component.html**
+```html
+<div class="account-details-container">
+  <div class="details-header">
+    <button class="back-button" (click)="goBack()">← Back to Dashboard</button>
+  </div>
+
+  <div class="account-info-card" *ngIf="!isLoading && account">
+    <div class="account-header">
+      <div>
+        <h1>{{ account.name }}</h1>
+        <p class="account-meta">{{ account.institution }} • {{ account.accountNumber }}</p>
+      </div>
+      <div class="balance-display">
+        <span class="balance-label">Current Balance</span>
+        <span class="balance-value" [class.negative]="account.balance < 0">
+          {{ formatCurrency(account.balance) }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="transactions-section" *ngIf="!isLoading">
+    <h2>Recent Transactions</h2>
+    <div class="transactions-list" *ngIf="transactions.length > 0">
+      <div *ngFor="let transaction of transactions" class="transaction-item">
+        <div class="transaction-info">
+          <span class="transaction-description">{{ transaction.description }}</span>
+          <span class="transaction-date">{{ transaction.date | date:'MMM d, yyyy' }}</span>
+        </div>
+        <div class="transaction-amount" [class.credit]="transaction.type === 'CREDIT'">
+          {{ formatCurrency(transaction.amount) }}
+        </div>
+      </div>
+    </div>
+    <div *ngIf="transactions.length === 0" class="no-transactions">
+      <p>No transactions available for this account.</p>
+    </div>
+  </div>
+</div>
+```
+
+---
+
+## 🤖 Phase 5: AI Chat Integration with Gemini (60 mins)
+
+### Backend - Gemini Integration
+
+Add to `pom.xml`:
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
+```
+
+**application.properties**
+```properties
+gemini.api.key=YOUR_GEMINI_API_KEY_HERE
+gemini.api.url=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent
+```
+
+**GeminiService.java**
+```java
+package com.wealthwise.service;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class GeminiService {
+
+    @Value("${gemini.api.key}")
+    private String apiKey;
+
+    @Value("${gemini.api.url}")
+    private String apiUrl;
+
+    private final WebClient webClient;
+
+    public GeminiService() {
+        this.webClient = WebClient.builder().build();
+    }
+
+    public Mono<String> getChatResponse(String userMessage, String context) {
+        String systemPrompt = "You are WealthWise AI, a helpful personal finance assistant. " +
+                "You help users manage their finances, pay bills on time, plan expenses, " +
+                "and provide financial advice. Be concise, friendly, and actionable. " +
+                "Here is the user's financial context: " + context;
+
+        Map<String, Object> requestBody = new HashMap<>();
+        Map<String, Object> content = new HashMap<>();
+        Map<String, String> part = new HashMap<>();
+        
+        part.put("text", systemPrompt + "\n\nUser: " + userMessage);
+        content.put("parts", List.of(part));
+        requestBody.put("contents", List.of(content));
+
+        return webClient.post()
+                .uri(apiUrl + "?key=" + apiKey)
+                .bodyValue(requestBody)
+                .retrieve()
+                .bodyToMono(Map.class)
+                .map(response -> {
+                    try {
+                        List<Map<String, Object>> candidates = 
+                            (List<Map<String, Object>>) response.get("candidates");
+                        Map<String, Object> content2 = 
+                            (Map<String, Object>) candidates.get(0).get("content");
+                        List<Map<String, Object>> parts = 
+                            (List<Map<String, Object>>) content2.get("parts");
+                        return (String) parts.get(0).get("text");
+                    } catch (Exception e) {
+                        return "I apologize, but I'm having trouble processing your request. Please try again.";
+                    }
+                });
+    }
+}
+```
+
+**ChatController.java**
+```java
+package com.wealthwise.controller;
+
+import com.wealthwise.dto.ChatMessage;
+import com.wealthwise.dto.ChatResponse;
+import com.wealthwise.service.GeminiService;
+import com.wealthwise.service.MockDataService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
+
+@RestController
+@RequestMapping("/api/chat")
+@CrossOrigin(origins = "http://localhost:4200")
+public class ChatController {
+
+    @Autowired
+    private GeminiService geminiService;
+
+    @Autowired
+    private MockDataService mockDataService;
+
+    @PostMapping("/message")
+    public Mono<ResponseEntity<ChatResponse>> sendMessage(@RequestBody ChatMessage message) {
+        // Build context from user's financial data
+        String context = buildFinancialContext();
+        
+        return geminiService.getChatResponse(message.getMessage(), context)
+                .map(response -> {
+                    ChatResponse chatResponse = new ChatResponse(response);
+                    return ResponseEntity.ok(chatResponse);
+                });
+    }
+
+    private String buildFinancialContext() {
+        var accounts = mockDataService.getMockAccounts();
+        StringBuilder context = new StringBuilder();
+        context.append("User's Financial Summary:\n");
+        
+        double totalAssets = 0;
+        double totalDebts = 0;
+        
+        for (var account : accounts) {
+            context.append(String.format("- %s (%s): $%.2f\n", 
+                account.getName(), account.getType(), account.getBalance()));
+            
+            if (account.getBalance() >= 0) {
+                totalAssets += account.getBalance();
+            } else {
+                totalDebts += Math.abs(account.getBalance());
+            }
+        }
+        
+        context.append(String.format("\nTotal Assets: $%.2f\n", totalAssets));
+        context.append(String.format("Total Debts: $%.2f\n", totalDebts));
+        context.append(String.format("Net Worth: $%.2f", totalAssets - totalDebts));
+        
+        return context.toString();
+    }
+}
+```
+
+**DTOs for Chat:**
+```java
+// ChatMessage.java
+package com.wealthwise.dto;
+
+import lombok.Data;
+
+@Data
+public class ChatMessage {
+    private String message;
+}
+
+// ChatResponse.java
+package com.wealthwise.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class ChatResponse {
+    private String response;
+}
+```
+
+### Frontend - Chat Component
+
+**chat.component.ts**
+```typescript
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { ChatService } from '../../services/chat.service';
+
+interface Message {
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
+}
+
+@Component({
+  selector: 'app-chat',
+  templateUrl: './chat.component.html',
+  styleUrls: ['./chat.component.css']
+})
+export class ChatComponent {
+  messages: Message[] = [
+    {
+      text: "Hello! I'm WealthWise AI, your personal finance assistant. How can I help you today?",
+      isUser: false,
+      timestamp: new Date()
+    }
+  ];
+  
+  userInput: string = '';
+  isLoading: boolean = false;
+  
+  quickPrompts = [
+    "When are my credit card bills due?",
+    "Help me plan a $5000 vacation",
+    "What's my net worth?",
+    "How can I save more money?"
+  ];
+
+  constructor(
+    private chatService: ChatService,
+    private router: Router
+  ) {}
+
+  sendMessage(text?: string) {
+    const messageText = text || this.userInput.trim();
+    if (!messageText) return;
+
+    // Add user message
+    this.messages.push({
+      text: messageText,
+      isUser: true,
+      timestamp: new Date()
+    });
+
+    this.userInput = '';
+    this.isLoading = true;
+
+    // Get AI response
+    this.chatService.sendMessage(messageText).subscribe({
+      next: (response) => {
+        this.messages.push({
+          text: response.response,
+          isUser: false,
+          timestamp: new Date()
+        });
+        this.isLoading = false;
+        this.scrollToBottom();
+      },
+      error: (error) => {
+        this.messages.push({
+          text: "I apologize, but I'm having trouble connecting. Please try again.",
+          isUser: false,
+          timestamp: new Date()
+        });
+        this.isLoading = false;
+        this.scrollToBottom();
+      }
+    });
+
+    this.scrollToBottom();
+  }
+
+  useQuickPrompt(prompt: string) {
+    this.sendMessage(prompt);
+  }
+
+  scrollToBottom() {
+    setTimeout(() => {
+      const chatContainer = document.querySelector('.chat-messages');
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }, 100);
+  }
+
+  goBack() {
+    this.router.navigate(['/dashboard']);
+  }
+}
+```
+
+**chat.component.html**
+```html
+<div class="chat-container">
+  <div class="chat-header">
+    <button class="back-button" (click)="goBack()">← Back</button>
+    <h1>🤖 WealthWise AI Assistant</h1>
+    <div></div>
+  </div>
+
+  <div class="chat-messages">
+    <div *ngFor="let message of messages" 
+         class="message" 
+         [class.user-message]="message.isUser"
+         [class.ai-message]="!message.isUser">
+      <div class="message-content">
+        <p>{{ message.text }}</p>
+        <span class="message-time">
+          {{ message.timestamp | date:'short' }}
+        </span>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="message ai-message">
+      <div class="message-content">
+        <div class="typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-prompts" *ngIf="messages.length <= 2">
+    <h3>Try asking:</h3>
+    <div class="prompts-grid">
+      <button *ngFor="let prompt of quickPrompts" 
+              class="prompt-button"
+              (click)="useQuickPrompt(prompt)">
+        {{ prompt }}
+      </button>
+    </div>
+  </div>
+
+  <div class="chat-input">
+    <input 
+      type="text" 
+      [(ngModel)]="userInput"
+      (keyup.enter)="sendMessage()"
+      placeholder="Ask me anything about your finances..."
+      [disabled]="isLoading"
+    />
+    <button 
+      (click)="sendMessage()"
+      [disabled]="!userInput.trim() || isLoading"
+      class="send-button">
+      Send
+    </button>
+  </div>
+</div>
+```
+
+**chat.component.css**
+```css
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f5f7fa;
+}
+
+.chat-header {
+  background: white;
+  padding: 20px 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.back-button {
+  padding: 10px 20px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.back-button:hover {
+  background: #e0e0e0;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.message {
+  display: flex;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-message {
+  justify-content: flex-end;
+}
+
+.ai-message {
+  justify-content: flex-start;
+}
+
+.message-content {
+  max-width: 70%;
+  padding: 15px 20px;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-message .message-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom-right-radius: 5px;
+}
+
+.ai-message .message-content {
+  background: white;
+  color: #333;
+  border-bottom-left-radius: 5px;
+}
+
+.message-content p {
+  margin: 0 0 8px 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.message-time {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 5px;
+  padding: 10px 0;
+}
+
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background: #667eea;
+  border-radius: 50%;
+  animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-10px);
+  }
+}
+
+.quick-prompts {
+  padding: 20px 30px;
+  background: white;
+  border-top: 1px solid #e0e0e0;
+}
+
+.quick-prompts h3 {
+  margin: 0 0 15px 0;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.prompts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.prompt-button {
+  padding: 12px 16px;
+  background: #f5f7fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-align: left;
+  transition: all 0.3s;
+}
+
+.prompt-button:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.chat-input {
+  padding: 20px 30px;
+  background: white;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 15px;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 15px 20px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.chat-input input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.send-button {
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.send-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+```
+
+**chat.service.ts**
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ChatService {
+  private apiUrl = 'http://localhost:8080/api/chat';
+
+  constructor(private http: HttpClient) {}
+
+  sendMessage(message: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/message`, { message });
+  }
+}
+```
+
+---
+
+## 🎨 Phase 6: Final Polish & Testing (30 mins)
+
+### app-routing.module.ts
+```typescript
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { LoginComponent } from './components/login/login.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { AccountDetailsComponent } from './components/account-details/account-details.component';
+import { ChatComponent } from './components/chat/chat.component';
+import { AuthGuard } from './guards/auth.guard';
+
+const routes: Routes = [
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
+  { path: 'account/:id', component: AccountDetailsComponent, canActivate: [AuthGuard] },
+  { path: 'chat', component: ChatComponent, canActivate: [AuthGuard] },
+  { path: '**', redirectTo: '/login' }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+```
+
+### auth.guard.ts
+```typescript
+import { Injectable } from '@angular/core';
+import { Router, CanActivate } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthGuard implements CanActivate {
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  canActivate(): boolean {
+    if (this.authService.isAuthenticated()) {
+      return true;
+    }
+    this.router.navigate(['/login']);
+    return false;
+  }
+}
+```
+
+### app.module.ts
+```typescript
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './components/login/login.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { AccountDetailsComponent } from './components/account-details/account-details.component';
+import { ChatComponent } from './components/chat/chat.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    DashboardComponent,
+    AccountDetailsComponent,
+    ChatComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule,
+    HttpClientModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
+### Global Styles (styles.css)
+```css
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+```
+
+---
+
+## 🚀 Running the Application
+
+### Backend
+```bash
+cd wealthwise-backend
+./mvnw spring-boot:run
+# Server will start on http://localhost:8080
+```
+
+### Frontend
+```bash
+cd wealthwise-frontend
+ng serve
+# App will be available at http://localhost:4200
+```
+
+---
+
+## 📝 Testing Checklist
+
+- [ ] Login with demo credentials works
+- [ ] Dashboard displays mock financial data correctly
+- [ ] Net worth calculation is accurate
+- [ ] Account cards are clickable and navigate to details
+- [ ] Account details page shows transactions
+- [ ] Chat interface opens and displays welcome message
+- [ ] AI responses are generated from Gemini
+- [ ] Quick prompts work in chat
+- [ ] Navigation between pages works smoothly
+- [ ] Logout functionality works
+- [ ] Responsive design looks good on mobile
+- [ ] Mock "Link Account" button shows alert
+
+---
+
+## 🎯 Demo Script for Hackathon
+
+1. **Start with Login**: Show professional login page, use demo credentials
+2. **Dashboard Tour**: Highlight net worth summary, asset/debt breakdown
+3. **Click on Account**: Show transaction details
+4. **Open AI Chat**: Ask "When are my bills due?" and "Help me save for vacation"
+5. **Show Mock Integration**: Click "Link New Account" button
+6. **Emphasize**: AI-powered insights, clean UI, real-time chat
+
+---
+
+## 🔧 Environment Variables
+
+Create `.env` file for sensitive data:
+
+```
+# Backend
+GEMINI_API_KEY=your_actual_api_key_here
+
+# Frontend (environment.ts)
+API_URL=http://localhost:8080
+```
+
+---
+
+## 🎨 Additional Enhancements (If Time Permits)
+
+1. Add charts using Chart.js for spending trends
+2. Implement bill payment reminders
+3. Add expense categorization visualization
+4. Create savings goal tracker
+5. Add dark mode toggle
+6. Implement budget planning feature
+
+---
+
+## 📚 Resources
+
+- Angular Docs: https://angular.io/docs
+- Spring Boot: https://spring.io/projects/spring-boot
+- Gemini API: https://ai.google.dev/docs
+- Mock Data: Use JSON files or in-memory data structures
+
+---
+
+## ⚡ Quick Wins for Demo
+
+1. Use realistic mock data that tells a story
+2. Ensure smooth transitions and loading states
+3. Have fallback responses if Gemini API fails
+4. Practice the demo flow multiple times
+5. Prepare to explain the architecture clearly
+
+---
+
+**Good luck with your hackathon! 🚀💰**  
