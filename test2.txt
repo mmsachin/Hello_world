@@ -1,0 +1,219 @@
+1. Introduction and Summary of Complaint:
+
+This email constitutes a formal complaint of ongoing wage discrimination, retaliation, and a hostile work environment. I have previously raised concerns about discrimination and retaliation (details below), and unfortunately, the situation has not only persisted but has worsened. I am currently being paid as an Application Engineer while performing the duties and responsibilities of a Software Engineer (SWE), resulting in significant wage disparity. Furthermore, I am experiencing continued retaliation from my skip-level manager, Henry Chang, for raising previous complaints. This ongoing discriminatory and retaliatory treatment has severely impacted my health, necessitating a request for medical leave under the Family and Medical Leave Act (FMLA).
+
+2. Previous Complaints:
+
+I have previously raised concerns regarding discrimination, retaliation, and policy violations on the following dates:
+
+September 6, 2023: Reported policy violation and discrimination based on country of origin to Employee Relations.
+
+September 7, 2023: Informed my then-manager about raising concerns with HR.
+
+October 2, 2023: Filed a Workers' Compensation claim for work-related medical issues (stress, anxiety disorder, PTSD, GERD, and other illnesses) caused by my then-manager's (Henry Chang) harassment.
+
+October 3, 2023: Reported policy violations related to hiring irregularities and harassment based on immigration status via Ethicspoint.
+
+October 27, 2023: Submitted an accommodation request to People Ops for a manager change or presence of a third party during 1:1s due to PTSD.
+
+October 28, 2023: Raised concerns regarding the review and promotion process (GRAD) with People Ops.
+
+October 2024: Raised a complaint to HR regarding continued discrimination and harassment, and the re-orging of my team back under Henry Chang.
+
+Despite these previous complaints, the core issues remain unresolved, and the retaliatory behavior has continued. HR's previous investigations, I believe, were inadequate and failed to address the root causes of the problems.
+
+3. Wage Discrimination:
+
+I am currently classified as an Application Engineer. However, since late 2023, and explicitly throughout 2024, I have been performing the duties and responsibilities of a Software Engineer (SWE). This is clearly documented in my most recent GRAD review (January 2025), written by my then-manager, Evgeny , which states:
+
+"Sachin started transitioning from SAP development to Finance Chatbot in the end of 2023, taking on SWE role profile responsibilities in 2024. Sachin has been making good progress onboarding with Google internal tech stack while also delivering on the expectation to own LLM API component of the Finance Chatbot. In 2025, I would like him to continue on this work and take ownership of more complex end-to-end features to further develop his software design skills and to contribute substantially to other components of our tech stack."
+
+This statement unequivocally confirms that I am performing SWE work. My peers, who are performing substantially similar work, are all classified as SWEs. This constitutes wage discrimination under the federal Equal Pay Act and potentially under the Texas Commission on Human Rights Act. I am being paid less than my colleagues for performing the same work.
+
+Further, my role alignment packet, submitted in November 2024 and approved by an independent senior SWE reviewer, has been deliberately delayed by Henry Chang, my skip-level manager. This delay directly impacts my compensation and is a clear manifestation of the wage disparity.
+
+4. Retaliation:
+
+I believe the delay in processing my role alignment packet is a direct act of retaliation by Henry Chang for my previous complaints of discrimination and harassment. Henry Chang has a documented history of retaliatory and abusive behavior towards me, including:
+
+Yelling and shouting.
+
+Continuous berating and belittling remarks.
+
+Ignoring my panic attacks during 1-on-1 meetings.
+
+Insulting me in front of the team.
+
+Spreading false rumors.
+
+Treating me differently compared to others in group meetings.
+
+Unfair write-ups and performance evaluations.
+
+Unfair denial of promotion
+
+Excluding me from crucial meetings.
+
+Imposing unrealistic expectations.
+
+Blocking my requested role transfer after initial support by current manager
+
+The current delay in my role alignment, which has been approved by all except Henry Chang, is a continuation of this pattern of retaliatory behavior. Henry's prior assignment of a 1-hour training on inclusive workplaces, as a result of HR's investigation into my October 2024 complaint, was clearly an insufficient response and has failed to deter his retaliatory conduct.
+
+5. Hostile Work Environment:
+
+Henry Chang's conduct, as described above, has created a hostile work environment. His behavior is severe, pervasive, and has significantly altered the conditions of my employment, creating an abusive and intimidating atmosphere. This constitutes a hostile work environment under Title VII of the Civil Rights Act of 1964.
+
+6. Impact on Health and FMLA Leave:
+
+The ongoing wage discrimination, retaliation, and hostile work environment have had a severe and detrimental impact on my health. I have been diagnosed with stress, anxiety disorder, PTSD, GERD, and other related illnesses, directly attributable to the workplace situation. My physician has recommended a medical leave of absence, and I have submitted a request for leave under the Family and Medical Leave Act (FMLA). The supporting medical documentation has been provided separately.
+
+7. Demands:
+
+To resolve this situation, I demand the following:
+
+Immediate Approval of Role Alignment: Immediate approval of my role alignment packet to Software Engineer (SWE), reflecting the work I have been performing since late 2023.
+
+Back Pay: Back pay for the difference between my Application Engineer salary and the SWE salary I should have been receiving since I began performing SWE duties (as documented in my GRAD review, effective from the start of 2024). This should include any associated benefits or bonuses that would have accrued at the SWE level.
+
+Thorough and Impartial Investigation: A thorough and impartial investigation into Henry Chang's conduct, including a review of all relevant documentation and interviews with witnesses. This investigation should be conducted by an external investigator, not internal HR, given the previous inadequate investigations.
+
+Change in Reporting Structure: An immediate and permanent change in my reporting structure, removing me from Henry Chang's supervision. I request to be placed under a different manager and skip-level manager.
+
+Assurances Against Further Retaliation: Written assurances from Google that I will not be subjected to any further retaliation for filing this complaint or for taking FMLA leave.
+
+
+I look forward to your prompt response and a resolution to this matter. I am available to discuss this further at your convenience.
+
+
+—-----
+
+Master Timeline - Sachin Mathapati - Google Employment Situation
+Date (YYYY-MM-DD)
+Time
+Event/Incident
+People Involved
+Documentation/Evidence
+Notes/Context
+Legal Relevance
+2023-09-06
+[Time]
+Reported policy violation and discrimination based on country of origin to Employee Relations.
+Me, [ER Rep Name]
+Email to ER summarizing meeting; Notes from meeting. (Location: "HR Complaints" folder)
+Felt dismissed; concerns not taken seriously.
+Discrimination, Retaliation (initial complaint)
+2023-09-07
+[Time]
+Informed manager about raising concerns with HR.
+Me, [Manager Name]
+[Record of communication - email, chat, or notes from verbal conversation] (Location: [Relevant Folder])
+[Manager's reaction/response]
+Retaliation (notification to manager)
+2023-09-14
+[Time]
+1:1 meeting with Henry Chang. Increased scrutiny of work, negative paper trail begins.
+Me, Henry Chang
+Email from Henry Chang criticizing work; My response email. (Location: "Henry Chang Emails" folder)
+Felt targeted; Henry building a case for negative reviews.
+Retaliation
+2023-09-15
+[Time]
+Manipulation of GRAD peer feedback for retaliatory purposes.
+Me, Henry Chang, et al.
+GRAD feedback records; Emails/communications related to feedback. (Location: "Performance Reviews (GRAD)" folder)
+Evidence of manipulation and negative bias.
+Retaliation
+... (Other 2023 events)
+...
+... (Add all other incidents from your provided timeline: Unfair write-ups, denial of promotion, exclusion from meetings, public humiliation, etc.)
+...
+... (Document all evidence as described in previous response)
+...
+...
+2023-10-02
+[Time]
+Filed a Workers' Compensation claim for work-related medical issues (stress, anxiety disorder, PTSD, GERD).
+Me, Workers Comp
+Claim filing, doctors notes and response from workers comp. (Location: "Workers Comp" folder)
+Medical issues caused due to work stress.
+Discrimination, Retaliation (initial complaint)
+2024-Late 2023/Early 2024
+[Time]
+Began performing SWE duties, as documented in GRAD review.
+Me, Evgeny
+GRAD review (January 2025). (Location: "Performance Reviews (GRAD)" folder)
+Transition to SWE role in practice, but not in title or compensation.
+Wage Discrimination
+2024-10-XX
+[Time]
+Raised complaint to HR about continued discrimination, harassment, and team re-org under Henry Chang.
+Me, Jannie Affeld, HR
+Email to HR; Notes from meeting with HR. (Location: "HR Complaints" folder)
+Reported team re-org and ongoing issues with Henry Chang.
+Retaliation, Hostile Work Environment
+2024-11-XX
+[Time]
+Role alignment packet submitted by Evgeny.
+Me, Evgeny
+Role alignment packet; Email confirming submission. (Location: "Role Alignment" folder)
+Packet approved by independent senior SWE reviewer.
+Wage Discrimination, Retaliation
+2025-01-XX
+[Time]
+HR informed me they found no retaliation regarding role alignment delay (but acknowledged differential treatment by Henry).
+Me, Audrey, Jessica
+Email from HR summarizing findings. (Location: "HR Complaints" folder)
+HR's response inadequate; minimized Henry's behavior.
+Retaliation, HR Ineffectiveness
+2025-02-04
+11:27 AM
+Sent email to Audrey and Jessica escalating concerns about retaliation, hostile work environment, and role alignment delay.
+Me, Audrey, Jessica
+Copy of email. (Location: "HR Complaints" folder)
+Explicitly stated concerns about reporting to Henry and ongoing retaliation.
+Retaliation, Hostile Work Environment, FMLA
+2025-02-XX
+[Time]
+Meeting with HR (Audrey, Jessica) where they suggested FMLA and contacting director.
+Me, Audrey, Jessica
+Notes from meeting. (Location: "Meeting Notes" folder)
+HR's response unhelpful; focused on removing me from the situation rather than addressing the root cause.
+HR Ineffectiveness, FMLA
+2025-02-15
+[Time]
+Initial meeting with Director (Srivats) to discuss concerns.
+Me, Srivats
+Notes from meeting. (Location: "Meeting Notes" folder)
+Director expressed understanding but did not offer concrete solutions.
+Retaliation, Potential Failure to Address Concerns
+2025-02-XX
+[Time]
+Discussions with Srivats about AI project (Budget Manager).
+Me, Srivats
+Chat logs; Emails; Project documentation. (Location: "AI Project" folder)
+Director's requests and my work on the project.
+Potential Unfair Labor Practices, Wage Discrimination (if used for SWE work)
+2025-02-XX (Today)
+[Time]
+Drafted and submitted formal HR complaint (wage discrimination, retaliation, hostile work environment).
+Me, Audrey, Jessica
+Copy of HR complaint email (THIS DOCUMENT). (Location: "HR Complaints" folder)
+Formal complaint outlining all issues and demands.
+Wage Discrimination, Retaliation, Hostile Work Environment, FMLA
+2025-02-XX (Today)
+[Time]
+Drafted and sent email to Director (Srivats) informing him of FMLA leave and expressing concerns about role alignment.
+Me, Srivats
+Copy of email to Director. (Location: "Director Emails" folder)
+Informed Director of leave, subtly addressed role alignment, hinted at action taken.
+FMLA, Retaliation, Wage Discrimination
+2025-02-XX (Today/Future)
+[Time]
+Received and submitted the FMLA Approval and supporting documents from doctor
+Me
+Copy of filled FMLA form, Doctor's note (Location: "FMLA Documents" folder)
+FMLA requested for the approved time period.
+FMLA
+
+
