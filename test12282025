@@ -1,0 +1,262 @@
+Sachin - Details
+
+Melos Zhou - Joined Google in Feb 10 2020
+
+November 9 2022 - Moved to SWE approved by Henry
+
+
+Ashley Shi - Joined Google in May 10 2021
+
+Oct 24 2023 She was moved to SWE approved by Henry
+
+
+
+Sachin - Joined Feb 8 2021
+
+Jan 8 2024 - Started reporting to Evgeny Loskutov till Feb 8 2025
+
+Evgeny Loskutov - Role Software Engineer
+
+ Reportees - 
+
+Jeff Minowa - SWE
+
+Bruno Pasini - SWE
+
+Aldan Hallak - SWE
+
+Sachin Mathapati - Application Engineer
+
+
+Role alignment -
+
+Evgeny submitted packet is Dec 2024 and was subsequently approved by independent reviewer in Dec
+
+Henry rejected in March 21 2025
+
+
+
+Henry Chang <henryc@google.com>
+
+
+
+Fri, Mar 21, 5:45 PM
+
+
+
+
+
+to me
+
+
+
+
+
+Henry Chang
+Manager, Application Engineering [Employee]
+40K: Corp Eng Apps - Finance Works
+henryc@google.com
+US-SVL-HMBLT4-3-3D2F
+henryc
+2006-04
++1 (510) 610-9001
+[Hide]
+Hi Sachin,
+Thank you for your interest & efforts to align your role to the SWE role profile.
+The outcome of your role alignment review is that while you have demonstrated some of the requirements for the L4 SWE role profile, there are several key requirements of the role profile that are not met. Therefore, your role alignment to the SWE role profile was not approved.
+While your role alignment was not approved, we always think of career progression as a journey and put in development plans that allow Googlers to pursue their career of their choice. I am committed to working with you to put together an individual development plan that provides the right opportunity for you to work on areas that need to be addressed.
+I’ve included some feedback on the review below, but I would be happy to discuss it further in more detail whenever it is convenient for you.
+Below are the areas where you have demonstrated the requirements for L4 SWE: 
+Working within new Google3 tech stack (prober, mendel) & existing Finance Chatbot, Admin App, and F1 Query systems.
+Detailed designs for features: prompt engineering, guardrail.
+Programming with different languages and frameworks: python, java, typescript, angular.  
+High unit test coverage at 99%.
+Here are the areas where we need to work together on:
+Data Structures & Algorithms: Demonstrating the use of data structure & algorithm to solve problems at scale or improve speed or reliability of a system, prevent recurrences; this is different from “programming”.
+Testing Beyond Unit Tests: Expanding beyond unit tests to include automated integration testing and having a test plan (to show engineering considerations for testing goals, testing strategies, what are the challenges to be overcome with the selected strategy, what is our confidence).
+Security and Privacy: Implementing robust security and privacy practices.
+Monitoring: Developing monitoring with prober should have a monitoring plan & analysis (to show engineering considerations for monitoring goals, challenges, and selected strategy).
+Code Review: Providing more detailed code review for SWE peers, focusing on code quality, readability, bugs, and efficiency, rather than just giving LGTMs.
+I recognize that this may not be the update you were hoping for. Nathan, Srivats and I are committed to supporting you and you are welcome to reach out to them as well. You are not expected to respond while you are on leave, but I am happy to connect with you whenever you are willing.
+
+—-
+
+Role alignment packet
+
+Table of contents
+
+Googler details
+Manager Statement of Support
+Googler artifacts / evidence
+[Recruiting/Vendor Team] Skip Level Review
+
+
+
+
+Googler details
+Instructions: Please complete the following details.
+
+
+Googler: sachinmm
+Product Area / Org: Corp Eng
+Current Role Profile & level: Application Engineer - L4 
+Proposed Role Profile & level:  Software Engineering  -L4
+Duration of work on the prospective role: 10months+ 100%
+Reason for proposed change:  Sachin has been working on SAP development for most of his career, which was in line with the AE role profile at Google. At the end of 2023 Sachin transitioned to the Finance Chatbot project, and Sachin contributions have been more in line with the SWE ladder.
+
+Manager Statement of Support (SoS)
+Instructions: For additional guidance on writing a SoS, review Write a candidate statement of support. Important: if you’ve shared this doc with the Googler, avoid adding sensitive information.
+
+
+For more than a year, Sachin has been owning one of the most important and sufficiently complex infrastructure components of the Finance Chatbot: F1QueryService RPC service implementation in the LLM API. Sachin demonstrated alignment with the L4 SWE role profile in the following ways:
+Authored design documents for his scope of work.
+Authored non-trivial Python code for the LLM API and gained Python readability. Also gained API readability and made multiple contributions to the API definitions.
+Engaging in many contributions beyond coding: project documentation in g3doc, building and configuring multiple probers for the LLM API, responding to monitoring alerts (e.g. from probers), setting up and maintaining Mendel experiments configuration, extending & maintaining dynamic configuration.
+Becoming an expert in LLM prompting and Gemini API integration, expert in F1 integration.
+Thorough regression testing of the changes, evaluation of multiple approaches to problem solving (the work on the gatekeeper prompts).
+Making contributions to all parts of the stack: Angular/TypeScript, Java/AppsFramework, storage (Spanner), LLM API.
+Sachin had been already delivering complex engineering work before joining Finance Chatbot team:
+Job scheduling and throttling algorithm for AR18n depreciation projection process (CL, TDD).
+Job concurrency management for AR18n depreciation simulation redesign (CL, TDD).
+
+Previous annual assessment and some (most feedback was positive) of the peer feedback flagged concerns about collaboration, quality of the contributions, and openness to feedback. As a manager, I had a chance to observe how Sachin internalized the feedback and took it to heart over the course of 2024:
+Quick to accept and resolve the feedback from code reviews and design reviews. Sachin often expresses gratitude for constructive feedback that I provide.
+Collaborates well with the SWE team and is happy to help with tasks outside of this domain of expertise. For example, Sachin has been contributing to the Admin UI quality improvements (Angular / TypeScript project).
+Collaborates well with our Finance partners (e.g. positive feedback from Senior Data Engineer).
+Stays in close touch with adjacent teams. For example, Sachin often reaches out to OneTwo and Gemini teams to unblock the work. He had been making some contributions to the OneTwo code base as well.
+Continuously contributes to quality / stability improvements: advanced error handling (recovering from incorrect SQL in cl/665408323), LLM API probers (CLs), 99% unit test coverage, manual testing artifacts (evals) from regression testing (CLs linking to spreadsheets), code refactoring (cl/623198847).
+
+
+Googler artifacts
+Instructions: Review the Artifact Guidance before filling out the template below.
+
+
+Artifact 1 (required): 
+Artifact:  F1QueryService (LLM API)
+Docs - TenX: Text2SQL using Prompt Engineering 
+Some important CLs - 
+Update F1 Query Service to use F1 directly instead of using OneTwo F1 Query E...  TenX: Skip summarization for large result + fix column data type in prompt  TenX: Disable side effects for all F1 Query requests  OneTwo - F1 Query Engine tests for Output formatting  TenX - OneTwo Framework: SQL Query Generation and Summarization (POC) TenX - OneTwo Framework: SQL Query Generation and Summarization (POC)  TenX - OneTwo Framework: SQL Query Generation and Summarization (POC) 
+
+Skills demonstrated:  Software system design, Code and system health, Code comprehension, Data analysis and synthesis, Programming, Software testing.
+Authorship: Main author and maintainer of the RPC service. Shared LLM API infrastructure (Sidecar server) is set up and maintained by an adjacent team.
+Context:  This project involved designing and implementation of a novel text-to-SQL system, leveraging prompt engineering, OneTwo framework, F1, and Gemini API. It enables users to query databases using natural language. The system was designed with a focus on testability, resilience, and maintainability, aligning with Google's engineering best practices.
+Well-factored and Testable Code: The core logic for SQL query generation and summarization was implemented with a modular design, separating concerns such as prompt generation, query execution, and result summarization. This facilitated thorough unit testing and future extensibility.  
+Resilience to Failure:  The system was designed to handle various failure scenarios, including invalid user input, database errors, and large result sets. Error handling mechanisms were implemented to provide graceful degradation and informative error messages to the user.  Furthermore, CL 609167568 addressed a specific scenario where large result sets impacted summarization performance, demonstrating a proactive approach to ensuring system stability.
+Modifiable and Extensible: The design document considered alternative approaches and future extensions, showcasing foresight in anticipating future needs. The modular design of the codebase ensured that the system could be readily modified and extended to support new features and integrations. For example, CL 674343303 demonstrates a significant architectural change - migrating from the OneTwo F1 Query Engine to direct F1 usage – while maintaining the core functionality and user experience. This exemplifies the system's adaptability to evolving technological landscapes.
+Impact & scope:
+The scope of this project includes an entire component in the Finance Chatbot technical infrastructure (F1QueryService implementation in the LLM API).
+The project was launched in April 2024 (as part of Finance Chatbot) and we’ve been onboarding production users since then. Text2SQL is the core component of the chatbot.
+
+Artifact 2 (required): 
+Artifact:  Chatbot Guardrails
+Finance Chatbot: Enable Guardrails -Technical Design 
+b/360895149 
+CLs - 
+Add guardrail responses to the conversation history.
+Enable guardrails: Add support for natural language response generation.
+Add table descriptions and suggested questions to the chain parameters.
+Pass suggested questions from ResourceConfig to F1QueryRequest
+Skills demonstrated:  Software system design, Code and system health, Data analysis and synthesis.
+Authorship: Co-authored the design with Senior Data Scientist from the DnA team, owned the implementation and testing.
+Context: The guardrail enhances the chatbot by providing informative natural language responses when a user asks a question different from a data inquiry. We evaluated multiple solutions, including a pre-processing "gatekeeper" approach to filter queries before NL2SQL processing.  After careful consideration, we chose a post-NL2SQL validation approach, where a parallel process attempts to generate both the SQL and a natural language "guardrail" response. This allows us to always attempt SQL generation, handle ambiguous queries effectively, and provide informative feedback to the user when in response to a general question.
+Impact & scope:
+This is an user-facing improvement within the existing Text2SQL project (see above).
+Guardrails make the chatbot more user friendly and more conversational. Chatbot is now able to respond to questions about its own functionality, data table, and question examples.
+
+Artifact 3 (required): 
+Artifact: LLM API probe
+Add promise bridge for F1QueryService
+               Add F1QueryService prober to Finance Chatbot.
+F1Query Service prober in autopush
+Add guardrail response probe for F1Query Service in autopush
+Add SQL recovery probe to autopush environment.
+Add prober F1 query probe prevalidation for staging environment
+Add prevalidation for F1 query probes in preprod
+Add prod prober for F1 query
+ 
+Skills demonstrated: Code and system health, Code comprehension, Programming, Software testing.
+Authorship:  Main author. Added new, substantially different probes to an existing prober server.
+Context:  Added new probes (Java code in the prober server, configuration) that directly invoke LLM API.  Includes three different probes to test SQL response, guardrail response, and SQL recovery features.
+Impact & scope:
+This is an internal infrastructure improvement within the existing Text2SQL project (see above).
+LLM API probers give the SWE team a lot more confidence when making changes in the LLM API F1QueryService. Probers provide an end-to-end test for most of the CUJs, including deployment blocks when prober’s success rate drops below a threshold. Probers also prevent the upstream regressions (we had some already) from deployment to higher environments.
+
+Artifact 4 (optional): 
+Artifact: Enhance LLM API to recover failed SQL
+Docs - Finance Chatbot: Recover Failed SQL using LLM
+TenX: Create experiment flag for SQL recovery feature 
+Tenx: Add SQL recovery feature flag to ExperimentalFeaturesProvider. 
+Add SQL recovery attempted response tag to F1 query chain. 
+Add table schema to the prompt for SQL query recovery. 
+Enable SQL recovery feature in all non-prod environments for all users. 
+TenX: Add SQL recovery feature to F1 query chain. 
+Tenx: Add SQL recovery feature flag to ExperimentalFeaturesProvider. 
+
+Skills demonstrated: Code and system health, Data analysis and synthesis, Programming, Software testing.
+Authorship: Main author.
+Context: This solution improves the TenX chatbot's robustness by automatically recovering from SQL errors generated by the LLM.  Currently, about 7% of queries fail due to SQL syntax errors or extraneous backticks in the LLM output.  Initially implemented and tested behind the ENABLE_SQL_RECOVERY feature flag, this system is now rolled out to all users after demonstrating significant improvements in query success rates. The LLM receives the original query and its error message and is prompted to generate a corrected SQL query.  To avoid infinite loops, only one recovery attempt is allowed. 
+Impact & scope:
+This is a user-facing improvement within the existing Text2SQL project.
+Base Gemini LLM often makes syntactic mistakes  when generating SQL queries. This improvement makes SQL generation more reliable.
+
+Artifact 5 (optional): 
+Artifact: Mendel setup for Finance Chatbot
+Docs - Enable Feature Flag for TenX  Chatbot
+TenX: Mendel experiment setup (go/boq-experiment-setup) 
+TenX - gcl config for session context feature 
+TenX: Proto update to enable feature flags 
+TenX: Enable Feature flag for session context in Query Action
+Skills demonstrated: Code and system health, Code comprehension, Programming, Software testing, Systems thinking.
+Authorship:  Main author
+Context: For the TenX chatbot project, implemented a feature flag system using Mendel ( go/mendel ) to enable controlled feature rollouts. This involved creating a Mendel configuration, integrating the Mendel runtime into the chatbot binary, adding feature flag checks in the code, and updating the F1QueryService to handle the feature flags and associated parameters. The F1QueryService was also refactored to accept a new F1QueryChainParameters object which encapsulates all necessary parameters for the query chain execution, streamlining the process and enabling features like session context to be controlled by feature flags. Launch will proceed with 100% rollout to internal users, followed by cleanup of the feature flag code once fully launched.
+Impact & scope:
+This is an internal infrastructure change within the Finance Chatbot and LLM API Boq servers.
+Integration with Mendel enables the SWE team to safely develop new features without impacting production users, and launch them in phases, or to a limited set of users.
+
+Artifact 6 (optional): 
+Artifact: Admin UI Test suite - Enhancements
+Add "Add to Test Set" action to Golden Queries 
+Add "Multi-select Add" Functionality to Golden Queries Tab
+Display actual SQL when Create/update test case execution fails.
+Skills demonstrated: Code comprehension, Programming, Software testing.
+Authorship: Individual contributor to an existing project.
+Context: These contributions to the Admin UI test suite significantly enhanced the usability and efficiency of the Golden Queries interface.  Sachin implemented Jasmine/Angular unit tests, adhering to best practices (go/tott/693) for three key features:  First, cl/678278236 introduced the "Add to Test Set" action, allowing individual queries to be easily added to test sets.  Second, cl/678389994 built upon this by adding multi-select functionality, enabling users to add multiple queries to a test set simultaneously.  Finally, cl/694112286 improved error handling by displaying the specific SQL query causing failures during test case creation or updates, drastically reducing debugging time. These contributions demonstrate a strong understanding of UI testing principles and a commitment to building a robust and user-friendly experience.
+Impact & scope
+This work is scoped to bug fixes and UI improvements in the upcoming Admin UI Test Suite functionality (Angular/TypeScript project).
+The new Admin UI Test Suite required a significant amount of UI changes and Sachin helped the team with SIT, fixing bugs and making other improvements.
+
+
+—
+Notes from Evgeny in my year end review
+
+Sachin started transitioning from SAP development to Finance Chatbot in the end of 2023, taking on SWE role profile responsibilities in 2024. Sachin has been making good progress onboarding with Google internal tech stack while also delivering on the expectation to own LLM API component of the Finance Chatbot. In 2025, I would like him to continue on this work and take ownership of more complex end-to-end features to further develop his software design skills and to contribute substantially to other components of our tech stack.
+
+
+
+
+
+---
+
+Role alignment overview
+A role alignment is when your manager submits a request to update your Role Profile to one that better reflects your current body of work. Role alignments only involve an update to your Role Profile without a change in team, manager, location, or cost center. You can’t use a role alignment in place of a standard transfer process where you apply to transfer to a new and open role.
+
+Role alignments apply to both technical and non-technical roles. Most technical roles require a technical review and additional approvals. Processing timelines vary and most role alignment requests take 4–8 weeks for final approvals to be completed.
+
+Role alignment requirements
+A role alignment may make sense if your Role Profile isn’t reflecting your current body of work (roles, responsibilities, or skills) and all of the following are true:
+
+Your location, cost center, and manager won’t change with or after the role alignment. 
+Your current manager or leadership initiates the request due to the evolving nature of your current work.
+The role alignment request isn’t related to an open go/grow role that you’re applying to. 
+Your current manager can provide 3-6 relevant artifacts of the work being done on the prospective Role Profile for review and approval. Note: This is required for most technical roles. Refer to step 1 in the role alignment process for details.
+The prospective Role Profile is already being used in your broader Product Area (PA) or function. Note: Limited exceptions may be approved.
+A role alignment isn’t the correct option if any of the following is true:
+
+You want to pursue a career change immediately and there’s no applicable or open role on your current team or on go/grow.
+You want to gain specific experience but are unable to find a full-time role with available headcount.
+You want to transfer to a new team while in your current Role Profile and then request role alignment under the new manager after transferring.
+Your manager, location, or cost center may also change due to the role alignment.
+
+
+
+
