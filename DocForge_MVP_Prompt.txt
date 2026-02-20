@@ -1,0 +1,571 @@
+# DocForge MVP — Shell Script Only Build Prompt
+
+You are building **DocForge**, a shell-based tool that generates comprehensive Technical Design Documents using Gemini CLI as sub-agents. This is an MVP — no UI, no backend server. Everything runs from a single entry-point shell script that orchestrates sub-agent scripts, displays progress in the terminal, and produces a final markdown document.
+
+---
+
+## HOW IT WORKS
+
+```
+User runs: ./docforge.sh -r requirements.txt -t templates/technical-design.json -o output/
+
+   ┌──────────────┐
+   │  docforge.sh  │  ← Main orchestrator script
+   └──────┬───────┘
+          │
+          ├──→ agents/analyzer.sh        (Phase 1: Analyze requirements)
+          │         ↓ writes analysis.json
+          │
+          ├──→ agents/section-writer.sh   (Phase 2: Write each section — called N times)
+          │         ↓ writes sections/<id>.md
+          │         │
+          │         │ (each section fed its dependency sections for cross-referencing)
+          │
+          ├──→ agents/reviewer.sh         (Phase 3: Review each section — called N times)
+          │         ↓ writes reviewed/<id>.md
+          │
+          └──→ agents/merger.sh           (Phase 4: Assemble final document)
+                    ↓ writes final-document.md
+
+Output: output/<timestamp>/final-document.md
+```
+
+---
+
+## PROJECT STRUCTURE
+
+```
+docforge/
+├── docforge.sh                    # Main entry point & orchestrator
+├── agents/
+│   ├── analyzer.sh                # Analyzes requirements → structured brief
+│   ├── section-writer.sh          # Writes one section of the doc
+│   ├── reviewer.sh                # Reviews & improves one section
+│   └── merger.sh                  # Assembles all sections into final doc
+├── templates/
+│   ├── technical-design.json      # Full TDD template (11 sections)
+│   ├── rfc.json                   # Lightweight RFC template (6 sections)
+│   └── adr.json                   # Architecture Decision Record (5 sections)
+├── prompts/
+│   ├── analyzer-system.txt        # System prompt for analyzer agent
+│   ├── writer-system.txt          # System prompt for section writer
+│   ├── reviewer-system.txt        # System prompt for reviewer
+│   └── merger-system.txt          # System prompt for merger
+└── output/                        # Generated docs land here
+```
+
+---
+
+## GEMINI CLI USAGE
+
+All agent scripts invoke Gemini CLI in headless/non-interactive mode. Use this pattern:
+
+```bash
+# Primary invocation pattern — adjust flags to match your installed version
+gemini -p "$PROMPT"
+
+# If prompt is too long for argument, use a temp file:
+PROMPT_FILE=$(mktemp /tmp/docforge-prompt-XXXXXX.txt)
+cat > "$PROMPT_FILE" << 'EOF'
+... prompt text ...
+EOF
+RESPONSE=$(gemini -p "$(cat "$PROMPT_FILE")")
+rm -f "$PROMPT_FILE"
+echo "$RESPONSE" > "$OUTPUT_FILE"
+```
+
+Verify exact flags with `gemini --help`. You may need `--model`, `--output-format`, or other flags. The key requirement is non-interactive invocation that accepts a prompt string and returns text to stdout.
+
+---
+
+## TEMPLATE FORMAT
+
+Templates are JSON files that define the document structure. The orchestrator reads this to know what sections to generate and in what order.
+
+```json
+{
+  "id": "technical-design",
+  "name": "Technical Design Document",
+  "sections": [
+    {
+      "id": "overview",
+      "title": "1. Overview & Problem Statement",
+      "depends_on": [],
+      "prompt_context": "Write a clear problem statement. Include business context, user pain points, and why this work matters now.",
+      "subsections": ["Background", "Problem Statement", "Goals", "Non-Goals"]
+    },
+    {
+      "id": "requirements",
+      "title": "2. Requirements",
+      "depends_on": ["overview"],
+      "prompt_context": "Detail functional and non-functional requirements. Be specific, measurable, and prioritized (P0/P1/P2).",
+      "subsections": ["Functional Requirements", "Non-Functional Requirements", "Constraints", "Assumptions"]
+    },
+    {
+      "id": "architecture",
+      "title": "3. System Architecture",
+      "depends_on": ["requirements"],
+      "prompt_context": "Describe high-level architecture with component diagram (ASCII), data flow, technology choices with justification, and alternatives considered.",
+      "subsections": ["High-Level Design", "Component Diagram", "Technology Stack", "Alternatives Considered"]
+    }
+  ]
+}
+```
+
+The `depends_on` array lists section IDs that must be completed before this section can be written. This ensures the section writer has prior sections available for cross-referencing. Sections with no dependencies can theoretically run in parallel, but for the MVP, run everything sequentially (parallel can be added later with background jobs + `wait`).
+
+Create three templates:
+1. **technical-design.json** — Full TDD with 11 sections: Overview, Requirements, Architecture, Data Model, API Design, Security, Scalability & Performance, Testing Strategy, Deployment & Rollout, Risks & Mitigations, Timeline & Milestones
+2. **rfc.json** — 6 sections: Summary, Motivation, Detailed Design, Alternatives Considered, Risks, Rollout Plan
+3. **adr.json** — 5 sections: Context, Decision, Consequences, Alternatives, Status
+
+Each section must have `id`, `title`, `depends_on`, `prompt_context`, and `subsections` fields. Write meaningful `prompt_context` for every section — this is the instruction that tells the writer agent what to cover.
+
+---
+
+## SCRIPT SPECIFICATIONS
+
+### docforge.sh (Main Orchestrator)
+
+**Usage:**
+```bash
+./docforge.sh -r <requirements_file> [-t <template_file>] [-o <output_dir>] [-m <model>] [--skip-review] [--verbose]
+```
+
+**Arguments:**
+- `-r, --requirements` (required): Path to requirements file (plain text or markdown)
+- `-t, --template`: Path to template JSON (default: `templates/technical-design.json`)
+- `-o, --output`: Output directory (default: `output/`)
+- `-m, --model`: Gemini model to use (default: `gemini-2.5-pro`)
+- `--skip-review`: Skip the review phase (faster, lower quality)
+- `--verbose`: Show full agent output in terminal (default: show only progress)
+
+**What it does:**
+
+1. **Parse arguments** and validate inputs (requirements file exists, template is valid JSON, output dir is writable)
+
+2. **Create job directory**: `<output>/<YYYYMMDD-HHMMSS>/` with subdirectories: `sections/`, `reviewed/`, `deps/`
+
+3. **Display banner**:
+```
+╔══════════════════════════════════════════════════╗
+║  DocForge — AI Design Doc Generator              ║
+║  Template: Technical Design Document             ║
+║  Sections: 11 | Model: gemini-2.5-pro            ║
+╚══════════════════════════════════════════════════╝
+```
+
+4. **Phase 1 — Analyze**: Call `agents/analyzer.sh`. Display:
+```
+[Phase 1/4] 🔍 Analyzing requirements...
+  ✓ Analysis complete (found 8 key components, 3 ambiguities flagged)
+```
+
+5. **Phase 2 — Write Sections**: Loop through template sections in dependency order. For each section:
+   - Check that all `depends_on` sections are already completed
+   - Copy completed dependency section files into `deps/<section_id>/` for cross-referencing
+   - Prepare a context file containing: section config + original requirements (truncated to first 4000 chars if too long)
+   - Call `agents/section-writer.sh`
+   - Display progress:
+```
+[Phase 2/4] ✍️  Writing sections...
+  [1/11] 🎯 Overview & Problem Statement .......... ✓ (723 words)
+  [2/11] 📋 Requirements .......................... ✓ (1,102 words)
+  [3/11] 🏗️  System Architecture ................... ✓ (1,456 words)
+  [4/11] 🗄️  Data Model ............................ ⟳ writing...
+```
+
+6. **Phase 3 — Review** (unless `--skip-review`): Loop through each written section, call `agents/reviewer.sh`. Display:
+```
+[Phase 3/4] 🔍 Reviewing sections...
+  [1/11] 🎯 Overview & Problem Statement .......... ✓ improved
+  [2/11] 📋 Requirements .......................... ✓ improved
+```
+
+7. **Phase 4 — Merge**: Call `agents/merger.sh` to assemble the final document. Display:
+```
+[Phase 4/4] 📄 Assembling final document...
+  ✓ Final document assembled
+```
+
+8. **Print summary**:
+```
+╔══════════════════════════════════════════════════╗
+║  ✅ Document generated successfully!              ║
+║                                                   ║
+║  📄 output/20260220-143052/final-document.md      ║
+║  📊 11 sections | 8,432 words | 47 min elapsed    ║
+╚══════════════════════════════════════════════════╝
+```
+
+**Dependency resolution logic (sequential MVP):**
+```bash
+# Read template sections, resolve order using depends_on
+# Simple approach: iterate sections, skip any whose deps aren't done yet,
+# keep looping until all are done (handles multi-level deps)
+
+declare -A completed
+remaining_sections=( ... )  # all section IDs from template
+
+while [ ${#remaining_sections[@]} -gt 0 ]; do
+  progress_made=false
+  for i in "${!remaining_sections[@]}"; do
+    section_id="${remaining_sections[$i]}"
+    deps_met=true
+    for dep in $(get_deps "$section_id"); do
+      if [[ -z "${completed[$dep]}" ]]; then
+        deps_met=false
+        break
+      fi
+    done
+    if $deps_met; then
+      # Write this section
+      write_section "$section_id"
+      completed[$section_id]=1
+      unset 'remaining_sections[$i]'
+      progress_made=true
+    fi
+  done
+  if ! $progress_made; then
+    echo "ERROR: Circular dependency detected" >&2
+    exit 1
+  fi
+done
+```
+
+**Error handling:**
+- If any agent exits non-zero, print the error, ask user to retry (y/n), and re-run that agent on "y"
+- If Gemini CLI is not found, print install instructions and exit
+- If template JSON is malformed, print specific parse error and exit
+- Trap SIGINT (Ctrl+C) to clean up temp files and print partial progress
+
+**Utility functions to implement:**
+- `log_info`, `log_warn`, `log_error` — colored terminal output using ANSI codes
+- `word_count` — count words in a generated section file
+- `elapsed_time` — track and display runtime
+- `parse_template` — extract section data from JSON (use `jq`)
+- `get_deps` — get depends_on array for a section ID from template
+- `check_dependencies` — verify jq and gemini are installed
+
+---
+
+### agents/analyzer.sh
+
+**Usage:** `./analyzer.sh <requirements_file> <template_file> <output_file> [model]`
+
+**What it does:**
+1. Read requirements file and template JSON
+2. Build a prompt that asks Gemini to:
+   - Parse the requirements thoroughly
+   - Identify key technical components, decisions, and constraints
+   - Flag ambiguities or missing information
+   - For EACH section in the template, produce 3-5 bullet points of what should be covered specifically based on these requirements
+   - Estimate technical depth needed per section (high/medium/low)
+3. Instruct Gemini to output ONLY valid JSON (no markdown fences, no preamble)
+4. Call Gemini CLI, capture output
+5. Validate output is parseable JSON (use `jq .` to check). If not valid JSON, retry once with a stricter prompt that emphasizes "output ONLY raw JSON"
+6. Write output to `<output_file>`
+7. Echo progress to stdout: `[analyzer] Analysis complete`
+
+**Output JSON structure:**
+```json
+{
+  "analysis": {
+    "key_components": ["Auth service", "Notification queue", "..."],
+    "technical_decisions": ["Use PostgreSQL for...", "..."],
+    "ambiguities": ["Requirements don't specify...", "..."],
+    "constraints": ["Must integrate with existing...", "..."]
+  },
+  "section_briefs": {
+    "overview": {
+      "key_points": ["Focus on real-time...", "..."],
+      "technical_depth": "medium"
+    },
+    "architecture": {
+      "key_points": ["Microservices with...", "Event-driven...", "..."],
+      "technical_depth": "high"
+    }
+  }
+}
+```
+
+---
+
+### agents/section-writer.sh
+
+**Usage:** `./section-writer.sh <section_id> <context_file> <analysis_file> <deps_dir> <output_file> [model]`
+
+**Arguments:**
+- `section_id`: e.g., "architecture"
+- `context_file`: JSON file containing `{ "section": { ...template section config }, "requirements": "..." }`
+- `analysis_file`: JSON output from analyzer
+- `deps_dir`: directory containing `.md` files of completed dependency sections
+- `output_file`: where to write the markdown output
+- `model`: optional Gemini model override
+
+**What it does:**
+1. Read all input files
+2. Read any dependency section files from `deps_dir` — concatenate them as "previously written sections" context
+3. Extract the section-specific brief from analysis JSON using `jq`
+4. Build a comprehensive prompt:
+
+```
+You are a senior technical writer creating a section of a Technical Design Document.
+
+SECTION TO WRITE: {section.title}
+SUBSECTIONS TO COVER: {section.subsections joined}
+
+SECTION-SPECIFIC INSTRUCTIONS:
+{section.prompt_context}
+
+KEY POINTS TO ADDRESS (from analysis):
+{section_briefs[section_id].key_points}
+
+ORIGINAL REQUIREMENTS:
+{requirements text}
+
+PREVIOUSLY WRITTEN SECTIONS (reference these for consistency):
+{contents of dependency .md files}
+
+WRITING GUIDELINES:
+- Use markdown with proper headers (## for section title, ### for subsections)
+- Be comprehensive and specific — no generic filler
+- Include tables for comparisons, specifications, or matrices
+- Include ASCII diagrams where they add clarity
+- Reference decisions from prior sections to maintain consistency
+- Include concrete examples, not just abstract descriptions
+- Add an "Open Questions" subsection at the end if ambiguities remain
+- Target 500-1500 words depending on the section's technical depth
+- Write in professional technical style suitable for an engineering audience
+
+Output ONLY the markdown content for this section. Do not wrap in code fences.
+Start directly with the ## heading.
+```
+
+5. Call Gemini CLI, capture output
+6. Validate output is non-empty. If empty, retry once
+7. Write to output file
+8. Echo: `[writer] Section '{section_id}' complete ($(wc -w < output_file) words)`
+
+---
+
+### agents/reviewer.sh
+
+**Usage:** `./reviewer.sh <section_file> <requirements_file> <output_file> [model]`
+
+**What it does:**
+1. Read the written section and original requirements
+2. Build a review prompt:
+
+```
+You are a principal engineer reviewing a section of a technical design document.
+
+ORIGINAL REQUIREMENTS:
+{requirements}
+
+SECTION TO REVIEW:
+{section content}
+
+Review and IMPROVE this section. Check for:
+1. Technical accuracy — are the claims and decisions sound?
+2. Completeness — are there missing edge cases, failure modes, or scenarios?
+3. Specificity — replace any vague language with concrete details
+4. Consistency — does it align with the stated requirements?
+5. Actionability — could an engineer implement from this section alone?
+6. Structure — are subsections logical and well-organized?
+
+Output the IMPROVED version of the entire section.
+Keep the same markdown structure but enhance content quality.
+Add missing details. Fix inaccuracies. Strengthen weak areas.
+Do not add review comments — output ONLY the improved section markdown.
+```
+
+3. Call Gemini CLI, capture output
+4. Validate output length is at least 50% of input length (guard against truncation)
+5. Write to output file
+6. Echo: `[reviewer] Section reviewed and improved`
+
+---
+
+### agents/merger.sh
+
+**Usage:** `./merger.sh <sections_dir> <template_file> <metadata_file> <output_file> [model]`
+
+**Arguments:**
+- `sections_dir`: directory containing all reviewed .md files
+- `template_file`: original template JSON (for ordering)
+- `metadata_file`: JSON with `{ "title": "...", "author": "...", "date": "...", "version": "1.0-draft" }`
+- `output_file`: final markdown document path
+
+**What it does:**
+1. Read template to get correct section ordering
+2. Concatenate all section .md files in template order
+3. Build a merger prompt:
+
+```
+You are assembling a final Technical Design Document from individually written sections.
+
+DOCUMENT METADATA:
+Title: {title}
+Author: {author}
+Date: {date}
+Version: {version}
+
+SECTIONS (in order):
+{all section contents concatenated with --- separators}
+
+YOUR TASKS:
+1. Add a title block at the very top:
+   # {title}
+   **Author:** {author} | **Date:** {date} | **Version:** {version} | **Status:** Draft
+
+2. Write an Executive Summary (2-3 paragraphs) that synthesizes the entire document — the problem, solution approach, key decisions, and expected outcome
+
+3. Add a Table of Contents listing all sections with their subsections
+
+4. Include all sections in the order provided — do NOT rewrite them, but:
+   - Fix any terminology inconsistencies across sections
+   - Add brief transition sentences between sections if needed
+   - Add cross-references (e.g., "as described in Section 3") where sections reference each other
+
+5. Add a Glossary section at the end if technical terms, acronyms, or project-specific language is used
+
+6. Add a Document History / Changelog section at the very end:
+   | Version | Date | Author | Changes |
+   |---------|------|--------|---------|
+   | 1.0-draft | {date} | {author} | Initial draft generated |
+
+Output the COMPLETE final document in markdown.
+Do not wrap in code fences. Start with the # title.
+```
+
+4. Call Gemini CLI, capture output
+5. Write to output file
+6. Echo: `[merger] Final document assembled ($(wc -w < output_file) words)`
+
+---
+
+## SYSTEM PROMPT FILES
+
+Create these in the `prompts/` directory. These are optional — the agent scripts can have prompts inline. But externalizing them makes it easy to tweak without editing bash scripts.
+
+### prompts/analyzer-system.txt
+```
+You are a senior technical architect at a top-tier tech company. Your role is to analyze project requirements and produce a structured analysis that will guide a team of technical writers in creating a comprehensive design document. You are thorough, precise, and always flag ambiguities rather than making assumptions. You output only valid JSON with no additional text.
+```
+
+### prompts/writer-system.txt
+```
+You are a senior technical writer at a top-tier tech company. You write clear, comprehensive, and actionable technical design document sections. Your writing is specific (never vague), well-structured, and includes concrete examples, tables, and diagrams where they add value. You write for an audience of experienced engineers who will use this document to implement the described system.
+```
+
+### prompts/reviewer-system.txt
+```
+You are a principal engineer conducting a design review. You have deep experience across distributed systems, security, scalability, and software architecture. You improve documents by adding missing edge cases, strengthening weak arguments, adding specificity where things are vague, and ensuring technical accuracy. You output improved content, not review comments.
+```
+
+### prompts/merger-system.txt
+```
+You are a technical editor assembling a final document from individually written sections. You ensure consistency in terminology, smooth transitions between sections, proper cross-referencing, and a cohesive reading experience. You add executive summaries, tables of contents, and glossaries. You preserve the original content while polishing the overall document structure.
+```
+
+---
+
+## REQUIREMENTS
+
+- **bash 4+** (for associative arrays)
+- **jq** (for JSON parsing in shell scripts)
+- **gemini CLI** (authenticated and working)
+- No Python, no Node.js, no external dependencies beyond jq
+
+Test each agent script independently before running the orchestrator:
+```bash
+# Test analyzer
+echo "Build a REST API for user management" > /tmp/test-req.txt
+./agents/analyzer.sh /tmp/test-req.txt templates/technical-design.json /tmp/test-analysis.json
+cat /tmp/test-analysis.json | jq .
+
+# Test section writer
+echo '{"section":{"id":"overview","title":"Overview","prompt_context":"Write overview","subsections":["Background","Goals"]},"requirements":"Build a REST API"}' > /tmp/test-ctx.json
+mkdir -p /tmp/test-deps
+./agents/section-writer.sh overview /tmp/test-ctx.json /tmp/test-analysis.json /tmp/test-deps /tmp/test-section.md
+cat /tmp/test-section.md
+```
+
+---
+
+## IMPLEMENTATION ORDER
+
+1. Create `templates/technical-design.json` with all 11 sections and meaningful `prompt_context` for each
+2. Create `templates/rfc.json` and `templates/adr.json`
+3. Implement `agents/analyzer.sh` — test standalone
+4. Implement `agents/section-writer.sh` — test standalone with mock analysis
+5. Implement `agents/reviewer.sh` — test standalone
+6. Implement `agents/merger.sh` — test standalone with 2-3 mock section files
+7. Implement `docforge.sh` orchestrator — wire everything together
+8. End-to-end test with a real requirements file
+
+---
+
+## EXAMPLE END-TO-END RUN
+
+```bash
+$ cat requirements.txt
+We need to build a real-time notification service that supports:
+- Push notifications (iOS, Android, Web via FCM/APNs)
+- Email digests (configurable: daily/weekly/instant)
+- In-app notification center with read/unread state
+- User notification preferences (per-channel, per-category opt-in/out)
+- Notification templates with variable substitution
+- Rate limiting to prevent notification fatigue
+
+Scale: 10M users, peak 50M notifications/day
+Must integrate with existing OAuth2 auth service and user profile service.
+Storage: notification history retained for 90 days.
+Target latency: push delivery < 2s from trigger event.
+Budget: $5K/month cloud infrastructure.
+Timeline: MVP in 8 weeks, full launch in 16 weeks.
+
+$ ./docforge.sh -r requirements.txt -t templates/technical-design.json
+
+╔══════════════════════════════════════════════════╗
+║  DocForge — AI Design Doc Generator              ║
+║  Template: Technical Design Document             ║
+║  Sections: 11 | Model: gemini-2.5-pro            ║
+╚══════════════════════════════════════════════════╝
+
+[Phase 1/4] 🔍 Analyzing requirements...
+  ✓ Analysis complete (8 components, 2 ambiguities flagged)
+
+[Phase 2/4] ✍️  Writing sections...
+  [ 1/11] 🎯 Overview & Problem Statement .......... ✓ (847 words, 38s)
+  [ 2/11] 📋 Requirements .......................... ✓ (1,203 words, 45s)
+  [ 3/11] 🏗️  System Architecture ................... ✓ (1,567 words, 52s)
+  [ 4/11] 🗄️  Data Model ............................ ✓ (923 words, 41s)
+  [ 5/11] 🔌 API Design ............................ ✓ (1,344 words, 48s)
+  [ 6/11] 🔒 Security .............................. ✓ (1,056 words, 44s)
+  [ 7/11] 📈 Scalability & Performance ............. ✓ (1,189 words, 46s)
+  [ 8/11] 🧪 Testing Strategy ...................... ✓ (876 words, 39s)
+  [ 9/11] 🚀 Deployment & Rollout .................. ✓ (1,021 words, 43s)
+  [10/11] ⚠️  Risks & Mitigations ................... ✓ (734 words, 36s)
+  [11/11] 📅 Timeline & Milestones ................. ✓ (612 words, 33s)
+
+[Phase 3/4] 🔍 Reviewing sections...
+  [ 1/11] 🎯 Overview .............................. ✓ improved
+  [ 2/11] 📋 Requirements .......................... ✓ improved
+  [ 3/11] 🏗️  Architecture .......................... ✓ improved
+  ...
+  [11/11] 📅 Timeline .............................. ✓ improved
+
+[Phase 4/4] 📄 Assembling final document...
+  ✓ Final document assembled
+
+╔══════════════════════════════════════════════════╗
+║  ✅ Document generated successfully!              ║
+║                                                   ║
+║  📄 output/20260220-143052/final-document.md      ║
+║  📊 11 sections | 11,372 words | 23 min elapsed   ║
+╚══════════════════════════════════════════════════╝
+```
+
+Build all of this. Start with the templates, then the agent scripts, then the orchestrator. Make every script robust with proper error handling, input validation, and helpful error messages.
