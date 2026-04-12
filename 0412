@@ -1,0 +1,83 @@
+1. Objective
+Build a purpose-built reconciliation tool that validates the accuracy and completeness of data backfilled from Infra Spanner to Cloud Spanner as part of the Budget Manager migration from Google BoQ to Google Cloud. The tool will perform table-level and row-level comparisons across all 90 tables, surface discrepancies in a structured report, and provide the team with confidence that the migrated data is production-ready before cutover.
+2. Background
+2.1 Migration Context
+Budget Manager is migrating from Google BoQ (running on Infra Spanner) to Google Cloud (running on Cloud Spanner). The first phase of this migration involves backfilling historical data from the Infra Spanner instance into the new Cloud Spanner instance. This backfill is a prerequisite to running both systems in parallel and ultimately cutting over to Cloud.
+2.2 Why Reconciliation Is Needed
+Data integrity is critical for FP&A workflows. Budget Manager supports financial planning, forecasting, and reporting processes where even small discrepancies—missing rows, truncated values, mismatched timestamps—can cascade into material errors. A reconciliation step between the source (Infra Spanner) and target (Cloud Spanner) is essential to certify the backfill before enabling downstream consumption.
+2.3 Scale of the Problem
+Approximately 90 tables must be compared across the two Spanner instances.
+Tables vary significantly in schema complexity, row count, and data types.
+Infra Spanner and Cloud Spanner use different query engines, which limits the feasibility of a one-size-fits-all comparison approach.
+Some tables contain billions of rows, requiring efficient sampling or partitioned comparison strategies.
+3. Proposal
+3.1 Overview
+We propose building a custom reconciliation tool that connects to both the Infra Spanner and Cloud Spanner instances, reads data from each, and performs configurable comparisons. The tool will output a discrepancy report highlighting mismatches at the table, row, and column level.
+3.2 Core Capabilities
+Schema validation: Compare table schemas (column names, types, constraints) between Infra and Cloud.
+Row-count reconciliation: Verify that each table in Cloud contains the expected number of rows relative to Infra.
+Content-level comparison: For each table, perform row-by-row or hash-based comparison of data values, flagging mismatches.
+Configurable table list: Allow teams to specify which tables to reconcile, with support for inclusion/exclusion filters.
+Discrepancy reporting: Generate structured output (CSV/dashboard) with table name, column, primary key, expected vs. actual values, and severity classification.
+Tolerance and rule configuration: Support configurable tolerances for numeric fields and timestamp drift to reduce false positives.
+3.3 Architecture
+The tool will be built as a standalone service that authenticates to both Spanner instances using service accounts. It will operate in three phases:
+Phase 1 – Schema Diff: Pull DDL from both instances and compare programmatically.
+Phase 2 – Row Count & Checksum: Run aggregate queries (COUNT, FARM_FINGERPRINT) on each table and compare results.
+Phase 3 – Deep Diff: For tables with count or checksum mismatches, perform partitioned row-level comparison using primary key ranges.
+3.4 Key Design Decisions
+Engine abstraction layer: Because Infra Spanner and Cloud Spanner expose different client libraries and SQL dialects, the tool will include an abstraction layer that normalizes query construction and result parsing across both engines.
+Parallel execution: Comparisons will run concurrently across tables to stay within acceptable time windows for large datasets.
+Incremental mode: Support delta reconciliation for ongoing backfill operations, comparing only rows modified after a given timestamp.
+3.5 Success Criteria
+100% of 90 tables reconciled with zero unresolved critical discrepancies before cutover.
+Schema parity confirmed for all migrated tables.
+Reconciliation run completes within [TBD] hours for the full dataset.
+Discrepancy report is reviewable by the migration team without requiring manual SQL queries.
+4. Alternatives Considered
+4.1 PLX (Preferred Alternative)
+PLX is Google’s internal data analysis platform and was evaluated as the primary alternative for performing reconciliation.
+Why PLX Was Not Selected
+Different query engines: Infra Spanner and Cloud Spanner use fundamentally different engines. PLX pipelines cannot issue queries against both engines within a single, unified pipeline without significant workarounds.
+90-table scale: Writing and maintaining individual PLX queries or pipelines for each of the 90 tables is operationally expensive and error-prone. A generalized PLX approach is not feasible because each table has unique schema characteristics.
+Limited flexibility: PLX is optimized for batch analytics, not for row-level comparison with configurable tolerance rules, primary-key-based diffing, and structured discrepancy reporting.
+Maintenance overhead: Any schema change in the source or target would require updating the corresponding PLX pipeline, creating a fragile dependency.
+4.2 Manual Spot-Checks
+An approach based on manually querying a sample of tables and visually inspecting results was considered but rejected. This does not scale to 90 tables, provides no audit trail, and risks missing edge-case discrepancies that only surface in full-dataset comparison.
+4.3 Comparison Matrix
+Dimension
+Custom Recon Tool
+PLX
+Cross-engine support
+Native abstraction layer
+Requires separate pipelines per engine
+Scalability (90 tables)
+Config-driven, single codebase
+Individual pipelines per table
+Schema change handling
+Auto-detects via DDL diff
+Manual pipeline updates required
+Row-level diffing
+Primary-key-based deep diff
+Not natively supported
+Tolerance rules
+Configurable per column/type
+Custom logic per query
+Discrepancy reporting
+Structured report with severity
+Ad-hoc query output
+Maintenance burden
+Low – centralized config
+High – per-table pipelines
+Setup effort
+Medium – one-time build
+High – 90 pipeline definitions
+
+
+5. Next Steps
+Finalize tool architecture and select implementation language/framework.
+Identify pilot tables (5–10) for initial validation of the reconciliation approach.
+Build Phase 1 (Schema Diff) and validate against pilot tables.
+Extend to Phase 2 and Phase 3 for full 90-table coverage.
+Integrate discrepancy reporting into team dashboards or notification workflows.
+Conduct final reconciliation run and obtain sign-off from migration stakeholders.
