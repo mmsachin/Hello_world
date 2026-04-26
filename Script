@@ -1,0 +1,199 @@
+Speaker Script — Chapter 3: Key Analytical Tools & Concepts
+Audience: FP&A engineering team, Google Duration: ~10 minutes Source: Jack Alexander, Financial Planning & Analysis and Performance Management, Ch. 3
+
+
+SLIDE 1 — Title  (~15 sec)
+Hey everyone. Quick read-out on Chapter 3 of Jack Alexander's FP&A book — Key Analytical Tools and Concepts.
+
+I'll cover the nine tool categories the chapter introduces. For each, two things: what it does, and how our work as engineers connects to it.
+
+
+SLIDE 2 — Why this chapter  (~40 sec)
+Alexander's framing is simple. He says most of these tools are useful, well-known, and underutilized by finance professionals. So this chapter is the toolkit.
+
+The job of the toolkit is three things: understand business performance, identify problems and opportunities, and set a course toward improvement. That last one matters — the book is clear that analysts shouldn't just report variances. They should recommend actions.
+
+Same shape as engineering thinking: diagnose, evaluate, communicate.
+
+Our role specifically: we build the data, the models, and the tools that make this analysis possible. Knowing the tools makes us better partners.
+
+
+SLIDE 3 — Roadmap  (~25 sec)
+Three groups.
+
+Basic statistical tools — sorting, quartiles, Pareto, mean/median/std dev. The foundation.
+
+Projection and decision tools — sensitivity, scenario, expected value, decision trees. For dealing with uncertainty.
+
+Diagnostic and structural tools — performance trees, root cause, activity-based costing, benchmarking, and the business model framework with breakeven. For going deeper.
+
+I'll move through these as nine sections.
+
+
+SLIDE 4 — Basic statistical tools  (~50 sec)
+Section one. The foundation.
+
+Alexander walks through it as a sequence. Step one: sort the population descending by a key element — cost, revenue, value. Step two: look at the top quartile, because the top 25% almost always holds a disproportionate share of total value. Step three: apply Pareto — roughly 20% of items drive 80% of the value. Step four: layer on mean, median, standard deviation to characterize the spread. The book notes the mean gets distorted by outliers — that's when you reach for the median.
+
+The book example is Vance Corp's finished goods — 40 products. After sorting, the top quartile (10 products) holds 88% of total inventory value. The Pareto cut — just 8 products — holds 80%. That's where management focuses.
+
+For us: the analyst can only do this if our data has the right grain. Service-level cost, SKU-level margin, customer-level revenue. Aggregated too coarsely, the 80/20 disappears.
+
+
+SLIDE 5 — Sensitivity vs. Scenario  (~50 sec)
+These two get conflated, but Alexander treats them as distinct.
+
+Sensitivity flexes one assumption. The book uses stock price — vary sales growth across one axis, operating margin across the other, and see how the valuation moves. It tells you which assumption matters most.
+
+Scenario is different. You're not flexing one variable — you're changing the entire chain of events. Recession instead of recovery. A lost contract. A new competitor. Many variables move together. The point isn't just to see the new number; the book emphasizes identifying the management actions that mitigate downside or capture upside.
+
+Used by FP&A in planning cycles, corp dev, strategy.
+
+For us: both analyses require parameterized models. If headcount ramp or unit cost is hardcoded, neither analysis can run.
+
+
+SLIDE 6 — Probability & Expected Value  (~50 sec)
+Section three. Probability and expected value.
+
+This is the actual table from the book. Five scenarios — two upside, the base, two downside. Each gets a probability. Multiply, sum, you get expected value.
+
+Look at the result. Base plan is 120,000. Expected value is 117,700. The point Alexander makes: there's more downside than upside in the distribution. The base forecast is too aggressive. Revise it down to the EV.
+
+This is how you sanity-check a forecast before committing to it.
+
+For us: those probabilities don't come from thin air. They come from history — past launches, past renewals, past migrations. Every clean dataset we maintain becomes a future base rate.
+
+
+SLIDE 7 — Decision & Event Trees  (~50 sec)
+Section four. Decision and event trees.
+
+This is the book's example almost verbatim — replace an existing product, or continue selling it. The "launch" branch has four outcomes: exceeds, meets, below, or fails in development. The "continue" branch has slow or rapid decline.
+
+Three things on every branch: a probability, an estimated value (NPV, EPS, or sales), and the secondary decisions that follow. It's the visual companion to expected value when decisions chain together.
+
+In our world: migration cutovers, build-vs-buy, capacity bets — same shape.
+
+
+SLIDE 8 — Performance Trees  (~50 sec)
+Section five. Performance trees. DuPont is the classic example — but the broader idea is decomposition.
+
+ROE equals profitability times asset turnover times financial leverage.
+
+Profitability is net income over sales — driven by gross margin and opex efficiency. Asset turnover is sales over total assets — how hard the asset base works. Financial leverage is assets over equity — how capital structure amplifies returns.
+
+The book's point: same headline ROE, completely different businesses. The grocery industry runs thin margins but turns assets fast — high turnover wins. Equipment manufacturers need fat margins to compensate for heavy capital. Walmart's profit margin is low, but turnover plus leverage gets ROE above 20%.
+
+So the lever you pull to improve ROE depends entirely on which driver is weak.
+
+
+SLIDE 9 — Root Cause Analysis  (~50 sec)
+Section six. Root cause analysis and the diagnostic disciplines.
+
+Alexander's emphasis here: don't stop at the symptom. The book example is past-due receivables. The aggregate looks like a collections problem. But when you break past-dues by reason — quality issues, billing errors, customer credit — quality is the real driver.
+
+That changes the recommendation entirely. It's not a collections fix. It's a manufacturing fix.
+
+The book pairs RCA with a broader toolkit: Continuous Improvement, Six Sigma, Total Quality Management, Lean Manufacturing, Benchmarking. Alexander notes these skills often live outside FP&A — in quality, ops, or consulting — so finance teams may need to partner.
+
+For us: the better our variance attribution, the better the RCA. If our dashboard just shows the aggregate miss, the analyst is stuck. If it breaks by region, cohort, deal stage — they have something to drill into.
+
+
+SLIDE 10 — Activity-Based Costing  (~50 sec)
+Section seven. Activity-based costing.
+
+The book's argument: allocating overhead by sales dollars distorts true profitability. Allocate by actual activity instead.
+
+The example is order processing and customer service — about 1.95 million dollars to allocate. Under sales-dollar allocation, the parts line gets 60,000 dollars of cost. But parts drives 79% of returns and 13% of invoices.
+
+Under activity-based allocation — by number of invoices and number of returns — parts gets 742,000 dollars. Twelve times more cost. Parts isn't actually profitable. Either pricing has to change, or the process does.
+
+This is the closest tool to what we already do. Allocating shared infrastructure cost back to product teams by actual usage — CPU-seconds, requests, storage GB — that's ABC. The metering data we maintain is the activity dataset.
+
+
+SLIDE 11 — The Business Model  (~50 sec)
+Section eight. The business model — and Alexander's main argument here.
+
+Many managers see the business model as just a P&L. Sales, gross margin, operating expenses, op margin. Each line as a percentage of sales. That's the traditional view.
+
+The book is direct: this is incomplete. It misses growth, capital intensity, and returns.
+
+The comprehensive view keeps everything in the P&L, then adds growth rate, asset utilization (DSO, DSI, asset turnover), leverage, and most importantly — ROE and ROIC. Long-term value comes from growth multiplied by ROIC.
+
+The book also warns against forcing one model across diverse business units. Inside the same company you can have one business with 65% gross margins and another at 15% — and both can post strong ROIC if the capital intensity is right.
+
+
+SLIDE 12 — Operating leverage & variabilizing  (~50 sec)
+Section nine — last one.
+
+If you split costs into fixed and variable, you get operating leverage and you can compute breakeven. Formula: fixed costs divided by contribution margin percentage.
+
+Book example: Roberts Manufacturing. Fixed costs of 60,000. Contribution margin of 75%. Breakeven sales: 80,000. Above that, every dollar of sales adds 75 cents of profit. Below it, 75 cents of loss per dollar.
+
+Then Alexander introduces a tactic — variabilizing. In cyclical industries, convert fixed costs into variable. Outsource manufacturing. Use external distributors. The breakeven drops, downside risk drops. In his example, breakeven moves from 80,000 down to about 73,000.
+
+There's a trade-off he names directly: lower profit at high sales, less control over key processes. Outsourcing means longer cycles and less information flow.
+
+
+SLIDE 13 — Closing  (~30 sec)
+So the takeaway.
+
+These nine tools don't live in our codebase. But four things we do are what make every one of them possible.
+
+Clean, granular data — without the right cuts, Pareto and ABC fall apart. Parameterized models — sensitivity, scenario, EV all need real input variables. Variance attribution — drill-downs are what make root cause analysis possible. Beyond the P&L — capital, growth, and asset metrics in our pipelines, not just income statement lines.
+
+Knowing the tools makes us better partners.
+
+Happy to take questions.
+
+
+TIMING SUMMARY
+Slide
+Topic
+Time
+1
+Title
+0:15
+2
+Why this chapter
+0:40
+3
+Roadmap
+0:25
+4
+Basic statistical tools
+0:50
+5
+Sensitivity vs Scenario
+0:50
+6
+Probability & EV
+0:50
+7
+Decision Trees
+0:50
+8
+Performance Trees / DuPont
+0:50
+9
+Root Cause Analysis
+0:50
+10
+Activity-Based Costing
+0:50
+11
+Business Model
+0:50
+12
+Operating leverage / variabilizing
+0:50
+13
+Closing
+0:30
+
+
+Total
+~9:20
+
+
+Buffer of ~40 sec for transitions and brief questions in flow.
+
