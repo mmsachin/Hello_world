@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2436 1200" width="2436" height="1200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F8F9FA"/>
+      <stop offset="100%" stop-color="#E8F0FE"/>
+    </linearGradient>
+    <linearGradient id="gateGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F1F3F4"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
+      <path d="M0,0 L14,7 L0,14 Z" fill="#5F6368"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="2436" height="1200" fill="url(#bg)"/>
+
+  <!-- Live area guide (invisible 2054x1125 centered) -->
+  <!-- live area starts at x=191, y=37 -->
+
+  <!-- Title -->
+  <text x="1218" y="160" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="72" font-weight="500" fill="#202124">From one CSV to many reviewer-ready PRs</text>
+  <text x="1218" y="225" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="36" fill="#5F6368">Five automated quality gates, powered by Gemini CLI in headless mode</text>
+
+  <!-- INPUT: CSV of DAOs -->
+  <g transform="translate(220, 480)" filter="url(#shadow)">
+    <rect width="280" height="240" rx="16" fill="#FFFFFF" stroke="#DADCE0" stroke-width="2"/>
+    <rect width="280" height="56" rx="16" fill="#4285F4"/>
+    <rect y="40" width="280" height="16" fill="#4285F4"/>
+    <text x="140" y="38" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="22" font-weight="500" fill="#FFFFFF">daos.csv</text>
+    <text x="32" y="98" font-family="Roboto Mono, monospace" font-size="20" fill="#202124">BudgetDao</text>
+    <text x="32" y="128" font-family="Roboto Mono, monospace" font-size="20" fill="#202124">AllocationDao</text>
+    <text x="32" y="158" font-family="Roboto Mono, monospace" font-size="20" fill="#202124">LedgerDao</text>
+    <text x="32" y="188" font-family="Roboto Mono, monospace" font-size="20" fill="#202124">ApprovalDao</text>
+    <text x="32" y="218" font-family="Roboto Mono, monospace" font-size="20" fill="#5F6368">…N more</text>
+  </g>
+
+  <!-- Arrow -->
+  <line x1="510" y1="600" x2="600" y2="600" stroke="#5F6368" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- Five Gates -->
+  <g font-family="Google Sans, Arial, sans-serif">
+    <!-- Gate 1: Generate -->
+    <g transform="translate(620, 520)" filter="url(#shadow)">
+      <rect width="220" height="160" rx="14" fill="url(#gateGrad)" stroke="#4285F4" stroke-width="3"/>
+      <circle cx="110" cy="56" r="28" fill="#4285F4"/>
+      <text x="110" y="64" text-anchor="middle" font-size="28" font-weight="700" fill="#FFFFFF">1</text>
+      <text x="110" y="115" text-anchor="middle" font-size="22" font-weight="500" fill="#202124">Generate</text>
+      <text x="110" y="142" text-anchor="middle" font-size="16" fill="#5F6368">Gemini CLI</text>
+    </g>
+    <line x1="850" y1="600" x2="900" y2="600" stroke="#5F6368" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <!-- Gate 2: Build -->
+    <g transform="translate(920, 520)" filter="url(#shadow)">
+      <rect width="220" height="160" rx="14" fill="url(#gateGrad)" stroke="#34A853" stroke-width="3"/>
+      <circle cx="110" cy="56" r="28" fill="#34A853"/>
+      <text x="110" y="64" text-anchor="middle" font-size="28" font-weight="700" fill="#FFFFFF">2</text>
+      <text x="110" y="115" text-anchor="middle" font-size="22" font-weight="500" fill="#202124">Build + Lint</text>
+      <text x="110" y="142" text-anchor="middle" font-size="16" fill="#5F6368">CI checks</text>
+    </g>
+    <line x1="1150" y1="600" x2="1200" y2="600" stroke="#5F6368" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <!-- Gate 3: Tests -->
+    <g transform="translate(1220, 520)" filter="url(#shadow)">
+      <rect width="220" height="160" rx="14" fill="url(#gateGrad)" stroke="#34A853" stroke-width="3"/>
+      <circle cx="110" cy="56" r="28" fill="#34A853"/>
+      <text x="110" y="64" text-anchor="middle" font-size="28" font-weight="700" fill="#FFFFFF">3</text>
+      <text x="110" y="115" text-anchor="middle" font-size="22" font-weight="500" fill="#202124">Unit tests</text>
+      <text x="110" y="142" text-anchor="middle" font-size="16" fill="#5F6368">pass / fail</text>
+    </g>
+    <line x1="1450" y1="600" x2="1500" y2="600" stroke="#5F6368" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <!-- Gate 4: AI Review -->
+    <g transform="translate(1520, 520)" filter="url(#shadow)">
+      <rect width="220" height="160" rx="14" fill="url(#gateGrad)" stroke="#FBBC04" stroke-width="3"/>
+      <circle cx="110" cy="56" r="28" fill="#FBBC04"/>
+      <text x="110" y="64" text-anchor="middle" font-size="28" font-weight="700" fill="#202124">4</text>
+      <text x="110" y="115" text-anchor="middle" font-size="22" font-weight="500" fill="#202124">AI self-review</text>
+      <text x="110" y="142" text-anchor="middle" font-size="16" fill="#5F6368">auto-fix</text>
+    </g>
+    <line x1="1750" y1="600" x2="1800" y2="600" stroke="#5F6368" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <!-- Gate 5: Diff Sanity -->
+    <g transform="translate(1820, 520)" filter="url(#shadow)">
+      <rect width="220" height="160" rx="14" fill="url(#gateGrad)" stroke="#EA4335" stroke-width="3"/>
+      <circle cx="110" cy="56" r="28" fill="#EA4335"/>
+      <text x="110" y="64" text-anchor="middle" font-size="28" font-weight="700" fill="#FFFFFF">5</text>
+      <text x="110" y="115" text-anchor="middle" font-size="22" font-weight="500" fill="#202124">Diff sanity</text>
+      <text x="110" y="142" text-anchor="middle" font-size="16" fill="#5F6368">scope check</text>
+    </g>
+  </g>
+
+  <!-- Arrow to output -->
+  <line x1="2050" y1="600" x2="2120" y2="600" stroke="#5F6368" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- OUTPUT: Stack of PRs -->
+  <g transform="translate(2140, 470)" filter="url(#shadow)">
+    <rect x="20" y="20" width="240" height="240" rx="14" fill="#E6F4EA" stroke="#34A853" stroke-width="2"/>
+    <rect x="10" y="10" width="240" height="240" rx="14" fill="#E6F4EA" stroke="#34A853" stroke-width="2"/>
+    <rect x="0" y="0" width="240" height="240" rx="14" fill="#FFFFFF" stroke="#34A853" stroke-width="3"/>
+    <text x="120" y="50" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="22" font-weight="500" fill="#202124">PR #4271</text>
+    <line x1="20" y1="68" x2="220" y2="68" stroke="#DADCE0" stroke-width="1"/>
+    <text x="20" y="100" font-family="Roboto Mono, monospace" font-size="16" fill="#5F6368">+ dual-write to</text>
+    <text x="20" y="124" font-family="Roboto Mono, monospace" font-size="16" fill="#5F6368">  destination</text>
+    <text x="20" y="148" font-family="Roboto Mono, monospace" font-size="16" fill="#5F6368">+ retry policy</text>
+    <text x="20" y="172" font-family="Roboto Mono, monospace" font-size="16" fill="#5F6368">+ tests passing</text>
+    <g transform="translate(20, 195)">
+      <rect width="90" height="30" rx="15" fill="#E6F4EA"/>
+      <text x="45" y="20" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="14" font-weight="500" fill="#137333">Ready</text>
+    </g>
+  </g>
+
+  <!-- Footer label -->
+  <text x="1218" y="1080" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="28" fill="#5F6368">CSV input  →  Five automated gates  →  Reviewer-ready PRs</text>
+  <text x="1218" y="1130" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="22" font-style="italic" fill="#80868B">Humans review only what already passes build, lint, tests, AI review, and diff sanity</text>
+</svg>
