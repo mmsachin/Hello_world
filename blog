@@ -1,0 +1,25 @@
+https://cloud.google.com/blog/products/databases/get-ahead-of-database-performance-issues-with-cloud-sql-insights
+https://cloud.google.com/blog/products/databases/sqlcommenter-merges-with-opentelemetry
+
+
+How to submit blogs?
+Cloud blog editorial team for their initial evaluation if it's worth publish to the Google Cloud blog 
+
+Here is the step-by-step process to get started:
+Review Guidelines: Start by reviewing the official writing guidelines at go/cloudwriting to ensure your topic fits their criteria (e.g., priority solutions, developer use cases, solutions architected, avoiding duplicate documentation).
+Choose a Publishing Path: Decide between the FastLane (which is generally recommended) or the Editorial publishing path.
+Draft Your Blog: Draft your post using one of the official templates:
+FastLane template: go/fastlanetemplate
+Standard Editorial template: go/cloud-blog-template
+Submit the Intake Form: Once your draft is ready, fill out the corresponding intake form:
+FastLane intake: go/fastlaneintake
+Standard Editorial intake: go/cloud-blog-intake
+Editorial Review: The blog editors will work directly with you to fine-tune the post and shepherd it through the required legal and PR reviews.
+Alternative Publishing Options Always submit your blogs to the Google Cloud Blog first. If the Cloud Blog team cannot use your content for any reason (e.g., it is too transient, highly technical but niche, or doesn't fit their current editorial calendar), they will usually recommend that you self-publish it to the Google Cloud Platform publication on Medium. You can find the guide for the GCP Medium publication at go/cloud-medium.
+Once your post is published on the official blog, you can track its performance metrics via the Cloud blog dashboard at go/cgcBlogStats.
+
+TOPICS
+
+Power for GEMINI CLI headless mode 
+Compare cloud vs infra spanner data
+How gemini can help in data migration
