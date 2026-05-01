@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1125" width="2000" height="1125">
+  <defs>
+    <filter id="shadow2" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow2" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto">
+      <path d="M0,0 L14,7 L0,14 Z" fill="#5F6368"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="2000" height="1125" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="1000" y="90" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="56" font-weight="500" fill="#202124">Interactive AI vs. headless AI</text>
+  <text x="1000" y="140" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="28" fill="#5F6368">From authoring assistant to pipeline component</text>
+
+  <!-- Divider -->
+  <line x1="1000" y1="200" x2="1000" y2="1050" stroke="#DADCE0" stroke-width="2" stroke-dasharray="8 8"/>
+
+  <!-- LEFT PANEL: Interactive AI -->
+  <g>
+    <text x="500" y="240" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="36" font-weight="500" fill="#4285F4">Interactive</text>
+    <text x="500" y="280" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="22" fill="#5F6368">One engineer, one chat, one DAO at a time</text>
+
+    <!-- Engineer icon -->
+    <g transform="translate(440, 340)">
+      <circle cx="60" cy="50" r="36" fill="#4285F4"/>
+      <path d="M 16 130 Q 16 90 60 90 Q 104 90 104 130 L 104 150 L 16 150 Z" fill="#4285F4"/>
+    </g>
+
+    <!-- Arrow down -->
+    <line x1="500" y1="510" x2="500" y2="560" stroke="#5F6368" stroke-width="3" marker-end="url(#arrow2)"/>
+
+    <!-- Chat window -->
+    <g transform="translate(280, 580)" filter="url(#shadow2)">
+      <rect width="440" height="280" rx="14" fill="#FFFFFF" stroke="#DADCE0" stroke-width="2"/>
+      <rect width="440" height="44" rx="14" fill="#F1F3F4"/>
+      <rect y="32" width="440" height="12" fill="#F1F3F4"/>
+      <circle cx="22" cy="22" r="6" fill="#EA4335"/>
+      <circle cx="42" cy="22" r="6" fill="#FBBC04"/>
+      <circle cx="62" cy="22" r="6" fill="#34A853"/>
+      <text x="220" y="28" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="16" fill="#5F6368">Chat</text>
+      <rect x="20" y="68" width="320" height="40" rx="20" fill="#E8F0FE"/>
+      <text x="40" y="93" font-family="Roboto, sans-serif" font-size="16" fill="#1A73E8">Update BudgetDao to dual-write…</text>
+      <rect x="80" y="124" width="340" height="40" rx="20" fill="#F1F3F4"/>
+      <text x="100" y="149" font-family="Roboto, sans-serif" font-size="16" fill="#202124">Sure! Here's the change…</text>
+      <rect x="20" y="180" width="180" height="40" rx="20" fill="#E8F0FE"/>
+      <text x="40" y="205" font-family="Roboto, sans-serif" font-size="16" fill="#1A73E8">Now do AllocationDao</text>
+      <rect x="20" y="236" width="400" height="32" rx="16" fill="#FCE8E6"/>
+      <text x="220" y="257" text-anchor="middle" font-family="Roboto, sans-serif" font-size="15" fill="#C5221F">Repeated manually for every DAO</text>
+    </g>
+
+    <!-- Arrow down -->
+    <line x1="500" y1="880" x2="500" y2="930" stroke="#5F6368" stroke-width="3" marker-end="url(#arrow2)"/>
+
+    <!-- Output: 1 DAO -->
+    <g transform="translate(420, 950)">
+      <rect width="160" height="60" rx="10" fill="#E8F0FE" stroke="#4285F4" stroke-width="2"/>
+      <text x="80" y="38" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="20" font-weight="500" fill="#1A73E8">1 DAO</text>
+    </g>
+  </g>
+
+  <!-- RIGHT PANEL: Headless AI -->
+  <g>
+    <text x="1500" y="240" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="36" font-weight="500" fill="#34A853">Headless</text>
+    <text x="1500" y="280" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="22" fill="#5F6368">A shell script processes many DAOs in parallel</text>
+
+    <!-- Terminal -->
+    <g transform="translate(1320, 320)" filter="url(#shadow2)">
+      <rect width="360" height="180" rx="12" fill="#202124"/>
+      <rect width="360" height="36" rx="12" fill="#3C4043"/>
+      <rect y="24" width="360" height="12" fill="#3C4043"/>
+      <circle cx="22" cy="18" r="5" fill="#EA4335"/>
+      <circle cx="40" cy="18" r="5" fill="#FBBC04"/>
+      <circle cx="58" cy="18" r="5" fill="#34A853"/>
+      <text x="180" y="22" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="14" fill="#9AA0A6">migrate.sh</text>
+      <text x="20" y="68" font-family="Roboto Mono, monospace" font-size="16" fill="#34A853">$ ./migrate.sh daos.csv</text>
+      <text x="20" y="96" font-family="Roboto Mono, monospace" font-size="16" fill="#E8EAED">→ gemini --headless …</text>
+      <text x="20" y="124" font-family="Roboto Mono, monospace" font-size="16" fill="#E8EAED">→ for dao in $list; do</text>
+      <text x="20" y="152" font-family="Roboto Mono, monospace" font-size="16" fill="#E8EAED">     run_pipeline "$dao"</text>
+    </g>
+
+    <!-- Fan-out arrows -->
+    <line x1="1500" y1="500" x2="1280" y2="600" stroke="#5F6368" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="1500" y1="500" x2="1400" y2="600" stroke="#5F6368" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="1500" y1="500" x2="1500" y2="600" stroke="#5F6368" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="1500" y1="500" x2="1600" y2="600" stroke="#5F6368" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="1500" y1="500" x2="1720" y2="600" stroke="#5F6368" stroke-width="2" marker-end="url(#arrow2)"/>
+
+    <!-- Parallel DAO workers -->
+    <g font-family="Roboto Mono, monospace" font-size="14" fill="#202124">
+      <g transform="translate(1230, 620)">
+        <rect width="100" height="64" rx="8" fill="#FFFFFF" stroke="#34A853" stroke-width="2"/>
+        <text x="50" y="28" text-anchor="middle" font-weight="500">DAO 1</text>
+        <text x="50" y="50" text-anchor="middle" fill="#137333" font-size="12">running</text>
+      </g>
+      <g transform="translate(1350, 620)">
+        <rect width="100" height="64" rx="8" fill="#FFFFFF" stroke="#34A853" stroke-width="2"/>
+        <text x="50" y="28" text-anchor="middle" font-weight="500">DAO 2</text>
+        <text x="50" y="50" text-anchor="middle" fill="#137333" font-size="12">running</text>
+      </g>
+      <g transform="translate(1450, 620)">
+        <rect width="100" height="64" rx="8" fill="#FFFFFF" stroke="#34A853" stroke-width="2"/>
+        <text x="50" y="28" text-anchor="middle" font-weight="500">DAO 3</text>
+        <text x="50" y="50" text-anchor="middle" fill="#137333" font-size="12">running</text>
+      </g>
+      <g transform="translate(1550, 620)">
+        <rect width="100" height="64" rx="8" fill="#FFFFFF" stroke="#34A853" stroke-width="2"/>
+        <text x="50" y="28" text-anchor="middle" font-weight="500">DAO 4</text>
+        <text x="50" y="50" text-anchor="middle" fill="#137333" font-size="12">running</text>
+      </g>
+      <g transform="translate(1670, 620)">
+        <rect width="100" height="64" rx="8" fill="#FFFFFF" stroke="#34A853" stroke-width="2"/>
+        <text x="50" y="28" text-anchor="middle" font-weight="500">DAO N</text>
+        <text x="50" y="50" text-anchor="middle" fill="#137333" font-size="12">running</text>
+      </g>
+    </g>
+
+    <!-- Convergence arrows -->
+    <line x1="1280" y1="700" x2="1480" y2="800" stroke="#5F6368" stroke-width="2"/>
+    <line x1="1400" y1="700" x2="1490" y2="800" stroke="#5F6368" stroke-width="2"/>
+    <line x1="1500" y1="700" x2="1500" y2="800" stroke="#5F6368" stroke-width="2" marker-end="url(#arrow2)"/>
+    <line x1="1600" y1="700" x2="1510" y2="800" stroke="#5F6368" stroke-width="2"/>
+    <line x1="1720" y1="700" x2="1520" y2="800" stroke="#5F6368" stroke-width="2"/>
+
+    <!-- Stacked PR output -->
+    <g transform="translate(1380, 820)">
+      <rect x="20" y="20" width="240" height="100" rx="10" fill="#E6F4EA" stroke="#34A853" stroke-width="2"/>
+      <rect x="10" y="10" width="240" height="100" rx="10" fill="#E6F4EA" stroke="#34A853" stroke-width="2"/>
+      <rect x="0" y="0" width="240" height="100" rx="10" fill="#FFFFFF" stroke="#34A853" stroke-width="3"/>
+      <text x="120" y="38" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="22" font-weight="500" fill="#202124">N reviewable PRs</text>
+      <text x="120" y="68" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="14" fill="#5F6368">overnight, unattended</text>
+      <g transform="translate(75, 78)">
+        <rect width="90" height="22" rx="11" fill="#E6F4EA"/>
+        <text x="45" y="16" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="12" font-weight="500" fill="#137333">Ready</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Footer -->
+  <text x="1000" y="1090" text-anchor="middle" font-family="Google Sans, Arial, sans-serif" font-size="22" font-style="italic" fill="#80868B">Headless mode turns Gemini from an authoring assistant into a deterministic pipeline step</text>
+</svg>
