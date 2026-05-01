@@ -1,0 +1,51 @@
+Notes on the Draft
+Style choices I made (matching the reference blogs):
+
+Practitioner voice, first-person plural ("we"), grounded in a real story
+Short paragraphs, no walls of text
+Pull quotes / callouts for the key insights
+Concrete sub-claims (5 layers of gates, 8 pipeline steps), not vague
+Lessons-learned section near the end — readers love takeaways
+No marketing fluff, no "revolutionary," no "transform your business"
+Closing CTA links, like the reference posts have
+
+Things you'll want to fill in / edit before submitting:
+
+Your name, title
+Specific numbers if you have them (# of DAOs, time saved, # of CLs generated, % of verification calls that self-healed). Even rough numbers ("dozens of DAOs," "hundreds of stubby calls") strengthen the post a lot
+A quote from your TL or manager would land well — the reference posts both use them
+One or two diagrams (the workflow diagrams from your project doc would be perfect — pipeline overview + verification self-heal loop)
+Confirm Budget Manager is OK to name publicly; if not, generalize to "a Google service's data layer"
+
+
+Submission Process — Step by Step
+Since the editorial guidelines are at internal go/ links, here's how to actually move:
+
+Read go/cloudwriting first. This is non-negotiable — it tells you which topic categories the team is currently prioritizing and which ones are saturated. Don't skip this; submissions that ignore the editorial calendar bounce.
+Pick FastLane. Your post is a single-author, single-topic, technical-practitioner story from inside Google. That's exactly what FastLane is designed for. Editorial path is for big launches and complex, multi-stakeholder pieces.
+Open the FastLane template at go/fastlanetemplate. Paste the draft above into it and reformat to match the template's section headers (they usually want: TL;DR, body, CTA, author bio, image specs).
+Get internal review first. Before submitting:
+
+Your manager / TL approves the content
+Anyone you quote signs off on their quote
+If you mention specific internal systems by name, confirm with the relevant team that the name is OK to use externally (Spanner is fine; internal codenames usually are not)
+Take a quick pass for anything that should be generalized (specific QPS numbers, cost figures, internal team names)
+
+
+Submit go/fastlaneintake. Fill out the form. Be specific in the "why this matters to readers" field — editors read that first to triage.
+Expect editorial feedback. Editors will tighten the headline, possibly cut a section, and shepherd it through legal + PR review. Be ready for one or two rounds of revisions.
+If they decline, they'll typically suggest the GCP Medium publication (go/cloud-medium). That's still a good outcome — the post lives in the official GCP Medium account and many readers find it there.
+After publication, track performance at go/cgcBlogStats so you have data for your packet / promo case.
+
+
+Quick Pre-submission Checklist
+
+ Manager / TL approval on content
+ Names of internal systems cleared for external use
+ Numbers and metrics either included or explicitly cut
+ Quotes (if any) signed off by the quoted person
+ One or two diagrams attached (the workflow diagrams from your project docs work)
+ Headline final
+ Author bio (one sentence) ready
+ Read through go/cloudwriting once
+ FastLane template populated, intake form ready
